@@ -25,27 +25,6 @@ public class AuthApiController {
 
     private final AuthService authService;
 
-    /** 통합 로그인 */
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto.Token> login(
-            @Valid @RequestBody AuthRequestDto.Login request, HttpServletResponse response) {
-
-        AuthResponseDto.Token tokenDto = authService.login(request);
-
-        //refresh token 을 위한 쿠키 생성
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenDto.getRefreshToken())
-                .httpOnly(true) //JavaScript에서 쿠키 접근 불가 (XSS 방지)
-                .secure(false) //HTTPS 연결에서만 쿠키 전송 (테스트를 위해 일단 false로 해두겠다)
-                .path("/") //모든 경로에서 쿠키 유효
-                .maxAge(Duration.ofDays(14)) //14일
-                .sameSite("Strict") //CSRF 공격 방지
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
-
-        return ResponseEntity.ok(tokenDto);
-    }
-
     /** 로그아웃 */
     @PostMapping("/logout")
     public ResponseEntity<Long> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {

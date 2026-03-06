@@ -34,10 +34,11 @@ public class DataInitializer implements CommandLineRunner {
                     .build());
         }
 
-        if (ownerRepository.findByEmail("owne1r@test.com").isEmpty()) {
+        if (ownerRepository.findByEmail("owner1@test.com").isEmpty()) {
             ownerRepository.save(Owner.builder()
                     .email("owner1@test.com")
                     .password(commonPassword)
+                    .businessNumber("1111111-11")
                     .role(MemberRole.OWNER)
                     .build());
         }
