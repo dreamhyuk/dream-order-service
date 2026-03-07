@@ -56,10 +56,6 @@ public class AuthApiController {
         return ResponseEntity.ok(newTokenSet);
     }
 
-/*    @PostMapping("/logout")
-    public String logout(HttpSession session) {
-
-    }*/
 
 
 }

@@ -38,7 +38,7 @@ public class CustomerApiController {
     public ResponseEntity<AuthResponseDto.Token> login(
             @Valid @RequestBody AuthRequestDto.Login request, HttpServletResponse response) {
 
-        AuthResponseDto.Token tokenDto = authService.login(request);
+        AuthResponseDto.Token tokenDto = authService.loginCustomer(request);
 
         //refresh token 을 위한 쿠키 생성
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenDto.getRefreshToken())
