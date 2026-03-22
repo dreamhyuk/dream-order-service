@@ -137,4 +137,14 @@ public class Order {
 
         this.status = OrderStatus.CANCEL;
     }
+
+    /**
+     * 주문 전체 금액 계산
+     * Order에 속한 OrderItem 들의 가격을 더한다
+     */
+    public int getTotalOrderPrice() {
+        return orderItems.stream()
+                .mapToInt(OrderItem::getOrderPrice)
+                .sum();
+    }
 }

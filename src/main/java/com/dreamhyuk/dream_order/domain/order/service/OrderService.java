@@ -8,19 +8,24 @@ import com.dreamhyuk.dream_order.domain.member.customer.MyAddressRepository;
 import com.dreamhyuk.dream_order.domain.menu.Menu;
 import com.dreamhyuk.dream_order.domain.menu.MenuRepository;
 import com.dreamhyuk.dream_order.domain.delivery.Delivery;
-import com.dreamhyuk.dream_order.domain.order.DeliveryType;
 import com.dreamhyuk.dream_order.domain.order.Order;
 import com.dreamhyuk.dream_order.domain.order.OrderItem;
 import com.dreamhyuk.dream_order.domain.order.OrderRepository;
+import com.dreamhyuk.dream_order.domain.order.dto.OrderDetailResponseDto;
+import com.dreamhyuk.dream_order.domain.order.dto.OrderResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +39,7 @@ public class OrderService {
     private final MyAddressRepository myAddressRepository;
 
     @Transactional
-    public Long order(OrderCommand.Create command) {
+    public Long saveOrder(OrderCommand.Create command) {
         //조회
         Customer customer = customerRepository.findById(command.getCustomerId()).orElseThrow();
         Shop shop = shopRepository.findById(command.getShopId()).orElseThrow();
@@ -164,9 +169,41 @@ public class OrderService {
     }
 
 
+    /**
+     * 조회 로직
+     */
+    //전체 조회
+    public Page<OrderResponseDto> findAllOrders(Long customerId, Pageable pageable) {
+        Page<Order> orderPage = orderRepository.findAllByCustomerId(customerId, pageable);
+
+        return orderPage.map(OrderResponseDto::of);
+    }
+
+    //상세 조회
+    public OrderDetailResponseDto findOrderDetail(Long orderId, Long customerId) throws AccessDeniedException {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        if (!order.getCustomer().getId().equals(customerId)) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
+
+        return OrderDetailResponseDto.of(order);
+    }
+
+    //진행중인 주문 조회
+    public List<OrderResponseDto> findActiveOrders(Long customerId) {
+        List<Order> activeOrders = orderRepository.findActiveOrders(customerId);
+
+        return activeOrders.stream()
+                .map(OrderResponseDto::of)
+                .collect(Collectors.toList());
+    }
 
 
-    //주소 추출 로직
+
+
+
+    /** 주소 추출 로직 */
     private Address resolveAddress(OrderCommand.Create command) {
 
         /** 포장이면 주소 추출 없이 바로 null 반환 (또는 매장 주소 반환) */

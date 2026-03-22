@@ -22,7 +22,19 @@ public class ShopDeliveryType {
     @Enumerated(EnumType.STRING)
     private DeliveryType deliveryType;
 
-
 //    private int extraFee; //나중에 추가요금같은 정보를 넣을 수 있음
+
+    // == 생성 메서드 == //
+    public static ShopDeliveryType createShopDeliveryType(DeliveryType deliveryType) {
+        ShopDeliveryType shopDeliveryType = new ShopDeliveryType();
+        shopDeliveryType.deliveryType = deliveryType;
+
+        return shopDeliveryType;
+    }
+
+    //== 연관관계 편의 메서드용 ==//
+    public void setShop(Shop shop) {
+        this.shop = shop;
+    }
 
 }

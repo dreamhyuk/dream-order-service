@@ -87,4 +87,13 @@ public class Delivery {
         this.status = DeliveryStatus.DELIVERED;
     }
 
+
+    /**
+     * 주소 정보를 문자열로 변환
+     */
+    public String getFullAddress() {
+        if (address == null) return "";
+
+        return String.format("%s %s (%s)", address.getCity(), address.getStreet(), address.getZipcode());
+    }
 }

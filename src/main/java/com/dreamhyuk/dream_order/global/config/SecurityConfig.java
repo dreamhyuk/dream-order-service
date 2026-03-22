@@ -38,13 +38,13 @@ public class SecurityConfig {
 
                         // 2. 고객(Customer) 도메인 설정
                         // 가입과 로그인은 인증 없이 접근 가능해야 합니다.
-                        .requestMatchers("/api/customers/join", "/api/customers/login").permitAll()
+                        .requestMatchers("/api/customers/signup", "/api/customers/login").permitAll()
                         // 그 외의 모든 고객 API는 CUSTOMER 권한 필요
                         .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
 
                         // 3. 사장님(Owner) 도메인 설정
                         // 사장님 가입과 로그인도 인증 없이 접근 가능합니다.
-                        .requestMatchers("/api/owners/join", "/api/owners/login").permitAll()
+                        .requestMatchers("/api/owners/signup", "/api/owners/login").permitAll()
                         // 그 외의 모든 사장님 API는 OWNER 권한 필요
                         .requestMatchers("/api/owners/**").hasRole("OWNER")
 
