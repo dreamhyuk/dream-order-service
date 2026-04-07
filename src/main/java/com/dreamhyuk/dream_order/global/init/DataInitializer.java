@@ -8,6 +8,10 @@ import com.dreamhyuk.dream_order.domain.member.customer.Customer;
 import com.dreamhyuk.dream_order.domain.member.customer.CustomerRepository;
 import com.dreamhyuk.dream_order.domain.member.owner.Owner;
 import com.dreamhyuk.dream_order.domain.member.owner.OwnerRepository;
+import com.dreamhyuk.dream_order.domain.menu.Menu;
+import com.dreamhyuk.dream_order.domain.menu.MenuGroup;
+import com.dreamhyuk.dream_order.domain.menu.repository.MenuGroupRepository;
+import com.dreamhyuk.dream_order.domain.menu.repository.MenuRepository;
 import com.dreamhyuk.dream_order.domain.order.DeliveryType;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
@@ -30,6 +34,8 @@ public class DataInitializer implements CommandLineRunner {
     private final CustomerRepository customerRepository;
     private final OwnerRepository ownerRepository;
     private final ShopRepository shopRepository;
+    private final MenuGroupRepository menuGroupRepository;
+    private final MenuRepository menuRepository;
     private final PasswordEncoder passwordEncoder;
     private final CategoryRepository categoryRepository;
     private final ElasticsearchOperations elasticsearchOperations;
@@ -105,7 +111,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // 1. Shop 데이터 생성 로직 추가
         if (shopRepository.count() == 0) {
-            // 이미 저장된 데이터 찾아오기
+            //owner 조회
             Owner owner1 = ownerRepository.findByEmail("owner1@test.com")
                     .orElseThrow(() -> new RuntimeException("Owner1를 찾을 수 없습니다."));
             Owner owner2 = ownerRepository.findByEmail("owner2@test.com")
@@ -134,26 +140,80 @@ public class DataInitializer implements CommandLineRunner {
                     List.of(chicken, fastFood),
                     address1,
                     "네네치킨");
+            shopRepository.save(shop1);
+
+            MenuGroup group1 = MenuGroup.createMenuGroup("후라이드", 1, shop1.getId());
+            MenuGroup group2 = MenuGroup.createMenuGroup("양념", 2, shop1.getId());
+            MenuGroup group3 = MenuGroup.createMenuGroup("음료", 3, shop1.getId());
+            menuGroupRepository.save(group1);
+            menuGroupRepository.save(group2);
+            menuGroupRepository.save(group3);
+
+            Menu menu1 = Menu.createMenu("후라이드치킨", 20000, shop1.getId(), group1);
+            Menu menu2 = Menu.createMenu("양념치킨", 21000, shop1.getId(), group2);
+            Menu menu3 = Menu.createMenu("코카콜라", 3000, shop1.getId(), group3);
+            group1.addMenu(menu1);
+            group2.addMenu(menu2);
+            group3.addMenu(menu3);
+            menuRepository.save(menu1);
+            menuRepository.save(menu2);
+            menuRepository.save(menu3);
+
+            ////////////////////////////////////////////////////////////////
             Shop shop2 = Shop.createShop(
                     owner2,
                     List.of(DeliveryType.DREAM_DELIVERY, DeliveryType.SHOP_DELIVERY, DeliveryType.TAKEOUT),
                     List.of(chicken, fastFood),
                     address2,
                     "교촌치킨");
+            shopRepository.save(shop2);
+
+            MenuGroup group4 = MenuGroup.createMenuGroup("인기메뉴", 1, shop2.getId());
+            MenuGroup group5 = MenuGroup.createMenuGroup("치킨", 2, shop2.getId());
+            MenuGroup group6 = MenuGroup.createMenuGroup("음료", 3, shop2.getId());
+            menuGroupRepository.save(group4);
+            menuGroupRepository.save(group5);
+            menuGroupRepository.save(group6);
+
+            Menu menu4 = Menu.createMenu("허니콤보", 23000, shop2.getId(), group4);
+            Menu menu5 = Menu.createMenu("레드콤보", 24000, shop2.getId(), group5);
+            Menu menu6 = Menu.createMenu("사이다", 3000, shop2.getId(), group6);
+            group4.addMenu(menu4);
+            group5.addMenu(menu5);
+            group6.addMenu(menu6);
+            menuRepository.save(menu4);
+            menuRepository.save(menu5);
+            menuRepository.save(menu6);
+
+            ////////////////////////////////////
             Shop shop3 = Shop.createShop(
                     owner3,
                     List.of(DeliveryType.DREAM_DELIVERY, DeliveryType.DREAM_DELIVERY, DeliveryType.TAKEOUT),
                     List.of(pizza, fastFood),
                     address3,
                     "피자헛");
-
-
-            shopRepository.save(shop1);
-            shopRepository.save(shop2);
             shopRepository.save(shop3);
-            elasticsearchOperations.save(ShopDocument.from(shop1));
-            elasticsearchOperations.save(ShopDocument.from(shop2));
-            elasticsearchOperations.save(ShopDocument.from(shop3));
+
+            MenuGroup group7 = MenuGroup.createMenuGroup("인기메뉴", 1, shop3.getId());
+            MenuGroup group8 = MenuGroup.createMenuGroup("피자", 2, shop3.getId());
+            MenuGroup group9 = MenuGroup.createMenuGroup("음료", 3, shop3.getId());
+            menuGroupRepository.save(group7);
+            menuGroupRepository.save(group8);
+            menuGroupRepository.save(group9);
+
+            Menu menu7 = Menu.createMenu("콤비네이션", 23000, shop3.getId(), group7);
+            Menu menu8 = Menu.createMenu("페페로니", 24000, shop3.getId(), group8);
+            Menu menu9 = Menu.createMenu("콜라", 3000, shop3.getId(), group9);
+            group7.addMenu(menu7);
+            group8.addMenu(menu8);
+            group9.addMenu(menu9);
+            menuRepository.save(menu7);
+            menuRepository.save(menu8);
+            menuRepository.save(menu9);
+
+            elasticsearchOperations.save(ShopDocument.from(shop1, List.of(group1, group2, group3)));
+            elasticsearchOperations.save(ShopDocument.from(shop2, List.of(group4, group5, group6)));
+            elasticsearchOperations.save(ShopDocument.from(shop3, List.of(group7, group8, group9)));
 
             System.out.println("ES에 상점 데이터 동기화 완료!");
         }

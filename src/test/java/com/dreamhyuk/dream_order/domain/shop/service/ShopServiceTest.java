@@ -4,6 +4,7 @@ import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 
 import java.util.List;
@@ -13,8 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class ShopServiceTest {
 
-    @Autowired
-    private ElasticsearchOperations elasticsearchOperations;
+    @MockBean
+    private ElasticsearchOperations elasticsearchOperations; // 가짜 객체 주입
+
+//    @MockBean
+//    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Test
     void saveMockData() {

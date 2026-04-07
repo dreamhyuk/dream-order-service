@@ -3,6 +3,7 @@ package com.dreamhyuk.dream_order.domain.shop;
 import com.dreamhyuk.dream_order.domain.category.Category;
 import com.dreamhyuk.dream_order.domain.common.Address;
 import com.dreamhyuk.dream_order.domain.member.owner.Owner;
+import com.dreamhyuk.dream_order.domain.menu.MenuGroup;
 import com.dreamhyuk.dream_order.domain.order.DeliveryType;
 import com.dreamhyuk.dream_order.domain.order.Order;
 import jakarta.persistence.*;
@@ -33,6 +34,9 @@ public class Shop {
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShopCategory> shopCategories = new ArrayList<>();
+
+//    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<MenuGroup> menuGroups = new ArrayList<>();
 
     @Embedded
     private Address address;
