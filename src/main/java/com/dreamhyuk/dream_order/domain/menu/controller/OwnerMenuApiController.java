@@ -3,6 +3,7 @@ package com.dreamhyuk.dream_order.domain.menu.controller;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuCreateRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuGroupRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuGroupUpdateRequestDto;
+import com.dreamhyuk.dream_order.domain.menu.dto.MenuUpdateRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.service.MenuService;
 import com.dreamhyuk.dream_order.global.userdetails.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -57,5 +58,18 @@ public class OwnerMenuApiController {
         Long id = menuService.saveMenu(userDetails.getMemberId(), shopId, menuGroupId, request);
 
         return ResponseEntity.ok(id);
+    }
+
+    @PatchMapping("/{menuGroupId}/menus/{menuId}")
+    public ResponseEntity<Void> updateMenu(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long shopId,
+            @PathVariable Long menuGroupId,
+            @PathVariable Long menuId,
+            @RequestBody MenuUpdateRequestDto request) throws AccessDeniedException {
+
+        menuService.updateMenu(userDetails.getMemberId(), shopId, menuGroupId, menuId, request);
+
+        return ResponseEntity.ok().build();
     }
 }

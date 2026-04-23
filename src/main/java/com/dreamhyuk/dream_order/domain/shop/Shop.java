@@ -35,27 +35,19 @@ public class Shop {
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShopCategory> shopCategories = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<MenuGroup> menuGroups = new ArrayList<>();
+/*
+    //MenuGroup에서 shopId 필드로 간전참조 하도록 변경
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MenuGroup> menuGroups = new ArrayList<>();
+*/
 
     @Embedded
     private Address address;
 
     private String shopName;
 
-    //== 비즈니스 로직 ==//
-    /**
-     * 가게가 지원하는 배달 방식인지 검증
-     */
-    public void validateSupport(DeliveryType deliveryType) {
-        boolean isSupported = this.supportedTypes.stream()
-                .anyMatch(s -> s.getDeliveryType() == deliveryType);
-
-        if (!isSupported) {
-            throw new IllegalArgumentException(String.format("[%s] 가게는 [%s] 방식을 지원하지 않습니다.",
-                    shopName, deliveryType.getDescription()));
-        }
-    }
+    private Double averageRating = 0.0; // 평균 별점
+    private Integer reviewCount = 0;    // 리뷰 개수 (정렬 가중치 및 신뢰도용)
 
     //== 생성 메서드 ==//
     public static Shop createShop(Owner owner, List<DeliveryType> deliveryTypes,
@@ -78,6 +70,19 @@ public class Shop {
     }
 
     //== 비즈니스 로직 ==//
+    /**
+     * 가게가 지원하는 배달 방식인지 검증
+     */
+    public void validateSupport(DeliveryType deliveryType) {
+        boolean isSupported = this.supportedTypes.stream()
+                .anyMatch(s -> s.getDeliveryType() == deliveryType);
+
+        if (!isSupported) {
+            throw new IllegalArgumentException(String.format("[%s] 가게는 [%s] 방식을 지원하지 않습니다.",
+                    shopName, deliveryType.getDescription()));
+        }
+    }
+
     public void addCategory(List<Category> categories) {
         if (categories == null || categories.isEmpty()) {
             throw new IllegalArgumentException("최소 1개의 카테고리를 선택해야 합니다.");
@@ -106,5 +111,25 @@ public class Shop {
             this.supportedTypes.add(shopDeliveryType);
             shopDeliveryType.setShop(this);
         }
+    }
+
+    public void update(String shopName, Address address, List<Category> categories, List<DeliveryType> deliveryTypes) {
+        this.shopName = shopName;
+        this.address = address;
+        this.addCategory(categories);
+        this.addDeliveryTypes(deliveryTypes);
+    }
+
+
+    //리뷰 작성 시 별점 업데이트
+    public void updateRating(Double newScore) {
+        //총점 계산 (현재 평균 + 현재 리뷰 수)
+        double totalScore = (this.averageRating + this.reviewCount) + newScore;
+
+        this.reviewCount++;
+
+        //새로운 평균 계산 및 반올림 (소수점 첫째 자리까지)
+        //0.5 단위 입력을 받아도 평균은 4.3처럼 나올 수 있으므로 반올림 처리를 해줘야 한다
+        this.averageRating = Math.round((totalScore / this.reviewCount) * 10) / 10.0;
     }
 }

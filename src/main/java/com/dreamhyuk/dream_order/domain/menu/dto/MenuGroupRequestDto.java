@@ -12,7 +12,7 @@ import lombok.*;
 public class MenuGroupRequestDto {
 
     @NotBlank(message = "MenuGroup 이름은 필수입니다.")
-    private String name;
+    private String groupName;
 
     //값을 프론트에서 전달받자.
     @NotNull(message = "priority는 필수입니다.")
@@ -20,6 +20,6 @@ public class MenuGroupRequestDto {
 
 
     public MenuGroup toEntity(Long shopId) {
-        return MenuGroup.createMenuGroup(this.name, this.priority, shopId);
+        return MenuGroup.createMenuGroup(this.groupName, this.priority, shopId);
     }
 }

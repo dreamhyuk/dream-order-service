@@ -5,21 +5,28 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.dreamhyuk.dream_order.domain.category.Category;
 import com.dreamhyuk.dream_order.domain.category.CategoryRepository;
+import com.dreamhyuk.dream_order.domain.common.Address;
 import com.dreamhyuk.dream_order.domain.member.owner.Owner;
 import com.dreamhyuk.dream_order.domain.member.owner.OwnerRepository;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopSearchResponseDto;
+import com.dreamhyuk.dream_order.domain.shop.dto.ShopUpdateRequestDto;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.util.StringUtils;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @Service
@@ -60,6 +67,34 @@ public class ShopService {
         return shop.getId();
     }
 
+    @Transactional
+    public void updateShop(Long shopId, Long ownerId, ShopUpdateRequestDto request) throws AccessDeniedException {
+        Shop shop = validateShopOwner(shopId, ownerId);
+
+        List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
+
+        Address address = Address.of(request.getCity(), request.getStreet(), request.getZipcode());
+
+        shop.update(
+                request.getShopName(),
+                address,
+                categories,
+                request.getDeliveryTypes());
+    }
+
+    //가게 소유권 검증
+    private Shop validateShopOwner(Long shopId, Long ownerId) throws AccessDeniedException {
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다. ID: " + shopId));
+
+        // Shop 엔티티에 저장된 ownerId와 현재 로그인한 ownerId를 비교
+        if (!shop.getOwner().getId().equals(ownerId)) {
+            throw new AccessDeniedException("해당 가게에 대한 관리 권한이 없습니다.");
+        }
+
+        return shop;
+    }
+
 
     /**
      * ( 필터(ex. 별점 높은 순)같은 건 구현 x)
@@ -74,7 +109,7 @@ public class ShopService {
     public List<ShopSearchResponseDto> search(ShopSearchCommand command) {
         BoolQuery.Builder boolQuery = QueryBuilders.bool();
 
-        //1. 키워드가 있으면 담는다
+        //1. 키워드가 검색
         if (StringUtils.hasText(command.getKeyword())) {
             boolQuery.must(m -> m.match(mt -> mt
                     .field("name")
@@ -82,7 +117,7 @@ public class ShopService {
                     .operator(Operator.And)));
         }
 
-        //카테고리 필터 추가
+        //2. 카테고리 필터 추가
         if (StringUtils.hasText(command.getCategoryType())) {
             boolQuery.filter(f -> f.term(t -> t.field("categories.type").value(command.getCategoryType())));
         }
@@ -92,8 +127,25 @@ public class ShopService {
                 .withQuery(q -> q.bool(boolQuery.build()))
                 .build();
 
+/*
+        NativeQueryBuilder queryBuilder = NativeQuery.builder()
+                .withQuery(q -> q.bool(boolQuery.build()));
+        // 정렬 조건 처리
+        if ("RATING_DESC".equals(command.getSortType())) {
+            // 별점 높은 순 정렬
+            queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "averageRating"));
+        } else {
+            // 기본값은 검색 정확도 순(Score)으로 설정하는 것이 좋다
+            queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "_score"));
+        }
+
+        // 페이징 처리 (이건 성능을 위해 꼭 넣어주세요!)
+        queryBuilder.withPageable(PageRequest.of(command.getPage(), 10));
+*/
+
         //실행 및 결과 매핑
         SearchHits<ShopDocument> searchHits = elasticsearchOperations.search(query, ShopDocument.class);
+//        SearchHits<ShopDocument> searchHits = elasticsearchOperations.search(queryBuilder.build(), ShopDocument.class);
 
         return searchHits.getSearchHits().stream()
                 .map(hit -> ShopSearchResponseDto.from(hit.getContent()))

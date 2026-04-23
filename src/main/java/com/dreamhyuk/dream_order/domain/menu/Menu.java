@@ -59,4 +59,10 @@ public class Menu {
     protected void setMenuGroup(MenuGroup menuGroup) {
         this.menuGroup = menuGroup;
     }
+
+    //== 비즈니스 로직 ==//
+    public void update(String menuName, Integer price) {
+        this.menuName = menuName;
+        this.price = price;
+    }
 }

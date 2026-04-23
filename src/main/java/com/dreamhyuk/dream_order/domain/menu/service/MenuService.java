@@ -32,7 +32,7 @@ public class MenuService {
         //소유권 검증 (가게 사장님이 맞는가?)
         validateShopOwner(shopId, ownerId);
 
-        if (menuGroupRepository.existsByShopIdAndName(shopId, request.getName())) {
+        if (menuGroupRepository.existsByShopIdAndName(shopId, request.getGroupName())) {
             throw new IllegalStateException("이미 존재하는 메뉴그룹입니다.");
         }
 
@@ -72,6 +72,16 @@ public class MenuService {
         menuRepository.save(menu);
 
         return menu.getId();
+    }
+
+    @Transactional
+    public void updateMenu(Long ownerId, Long shopId, Long menuGroupId, Long menuId, MenuUpdateRequestDto request) throws AccessDeniedException {
+        validateShopOwner(shopId, ownerId);
+        MenuGroup menuGroup = validateMenuGroupInShop(menuGroupId, shopId);
+
+        Menu menu = menuRepository.findById(menuId).orElseThrow();
+
+        menu.update(request.getMenuName(), request.getPrice());
     }
 
     /** 검증 로직 */

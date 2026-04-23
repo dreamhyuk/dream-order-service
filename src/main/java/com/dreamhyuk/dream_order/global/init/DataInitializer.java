@@ -13,6 +13,7 @@ import com.dreamhyuk.dream_order.domain.menu.MenuGroup;
 import com.dreamhyuk.dream_order.domain.menu.repository.MenuGroupRepository;
 import com.dreamhyuk.dream_order.domain.menu.repository.MenuRepository;
 import com.dreamhyuk.dream_order.domain.order.DeliveryType;
+import com.dreamhyuk.dream_order.domain.review.ReviewDocument;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,21 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        //ES 인덱스 먼저 초기화
+        IndexOperations indexOps1 = elasticsearchOperations.indexOps(ShopDocument.class);
+        if (indexOps1.exists()) {
+            indexOps1.delete();
+        }
+        indexOps1.create();
+        indexOps1.putMapping(indexOps1.createMapping());
+
+        IndexOperations indexOps2 = elasticsearchOperations.indexOps(ReviewDocument.class);
+        if (indexOps2.exists()) {
+            indexOps2.delete();
+        }
+        indexOps2.create();
+        indexOps2.putMapping(indexOps2.createMapping());
+
         String commonPassword1 = passwordEncoder.encode("1111");
         String commonPassword2 = passwordEncoder.encode("2222");
         String commonPassword3 = passwordEncoder.encode("3333");
@@ -219,4 +236,3 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 }
-

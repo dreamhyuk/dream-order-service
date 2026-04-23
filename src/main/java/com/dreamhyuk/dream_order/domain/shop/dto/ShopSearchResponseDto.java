@@ -18,6 +18,8 @@ public class ShopSearchResponseDto {
     private String name;
     private List<String> categoryNames; // "치킨", "피자" 처럼 이름만 리스트로 전달
 
+    //private Double averageRating; //나중에 별점을 추가한다면
+
     // 정적 팩토리 메서드
     public static ShopSearchResponseDto from(ShopDocument doc) {
         return ShopSearchResponseDto.builder()
