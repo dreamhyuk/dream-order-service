@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MenuGroupUpdateRequestDto {
 
-    private String name;
+    private String groupName;
+
     private Integer priority;
 }

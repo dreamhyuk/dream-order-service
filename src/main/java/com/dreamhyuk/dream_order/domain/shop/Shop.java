@@ -116,7 +116,11 @@ public class Shop {
     public void update(String shopName, Address address, List<Category> categories, List<DeliveryType> deliveryTypes) {
         this.shopName = shopName;
         this.address = address;
+
+        this.shopCategories.clear();
         this.addCategory(categories);
+
+        this.supportedTypes.clear();
         this.addDeliveryTypes(deliveryTypes);
     }
 

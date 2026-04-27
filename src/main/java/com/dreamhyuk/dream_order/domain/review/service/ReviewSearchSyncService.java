@@ -5,11 +5,14 @@ import com.dreamhyuk.dream_order.domain.review.ReviewDocument;
 import com.dreamhyuk.dream_order.domain.review.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewSearchSyncService {
 
     private final ReviewRepository reviewRepository;
@@ -29,5 +32,12 @@ public class ReviewSearchSyncService {
                 .build();
 
         elasticsearchOperations.save(doc);
+    }
+
+    @Transactional
+    public void delete(Long reviewId) {
+        elasticsearchOperations.delete(String.valueOf(reviewId), ReviewDocument.class);
+
+        log.info("ES review delete: reviewId={}", reviewId);
     }
 }

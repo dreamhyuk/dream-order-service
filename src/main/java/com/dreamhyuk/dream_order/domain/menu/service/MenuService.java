@@ -50,7 +50,7 @@ public class MenuService {
         //소속 검증
         MenuGroup menuGroup = validateMenuGroupInShop(menuGroupId, shopId);
 
-        menuGroup.update(request.getName(), request.getPriority());
+        menuGroup.update(request.getGroupName(), request.getPriority());
     }
 
 

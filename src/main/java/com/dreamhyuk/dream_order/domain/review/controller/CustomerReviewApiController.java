@@ -29,6 +29,16 @@ public class CustomerReviewApiController {
         return ResponseEntity.ok(id);
     }
 
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<Void> deleteReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long reviewId) {
+
+        reviewService.deleteReview(reviewId, userDetails.getMemberId());
+
+        return ResponseEntity.noContent().build();
+    }
+
 
 /*    @GetMapping
     public ResponseEntity<List<ReviewResponseDto>> getReviews() {

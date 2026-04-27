@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 
@@ -22,7 +23,13 @@ public class ShopEventListener {
     private final ObjectMapper objectMapper; // JSON 파싱용
 
     @KafkaListener(topics = "dbserver.mydb.shops", groupId = "shop-sync-group")
-    public void handleShopEvent(String message) {
+    public void handleShopEvent(@Payload(required = false) String message) { // 1. null 허용
+        // 2. Tombstone 메시지(null) 처리
+        if (message == null) {
+            log.info("Tombstone 메시지 수신: 로그 컴팩션을 위한 신호이므로 skip합니다.");
+            return;
+        }
+
         try {
             // Debezium JSON에서 읽어서 메모리에 '트리'로 펼침
             JsonNode root = objectMapper.readTree(message);
@@ -30,14 +37,21 @@ public class ShopEventListener {
             String op = root.path("payload").path("op").asText(); // c, u, d 중 하나
 
             // 어떤 경우든 '가장 최신 데이터' 혹은 '방금 전 데이터'에서 ID 추출
+            // 3. Debezium은 삭제 시 'after'가 null이므로 안전하게 'before'와 'after' 선택
             JsonNode data = op.equals("d") ?
                     root.path("payload").path("before") :
                     root.path("payload").path("after");
 
+            // 4. 데이터가 존재할 때만 ID 추출 (방어 코드)
+            if (data.isMissingNode() || data.isNull()) {
+                log.warn("message data가 비어있습니다. op: {}", op);
+                return;
+            }
+
             Long shopId = data.path("shop_id").asLong();
 
             if (op.equals("d")) {
-                log.info("상점 삭제 감지: shopId={}", shopId);
+                log.info("상점 delete 감지: shopId={}", shopId);
                 syncService.delete(shopId);
             } else {
                 log.info("상점 생성/수정 감지: shopId={}", shopId);
@@ -49,7 +63,13 @@ public class ShopEventListener {
     }
 
     @KafkaListener(topics = "dbserver.mydb.menu_groups", groupId = "menu-group-sync-group")
-    public void handleMenuGroupEvent(String message) {
+    public void handleMenuGroupEvent(@Payload(required = false) String message) { //null 허용
+        //Tombstone 메시지(null) 처리
+        if (message == null) {
+            log.info("Tombstone 메시지 수신: 로그 컴팩션을 위한 신호이므로 skip합니다.");
+            return;
+        }
+
         try {
             JsonNode root = objectMapper.readTree(message);
             String op = root.path("payload").path("op").asText();
@@ -57,6 +77,12 @@ public class ShopEventListener {
             JsonNode data = op.equals("d") ?
                     root.path("payload").path("before") :
                     root.path("payload").path("after");
+
+            //데이터가 존재할 때만 ID 추출 (방어 코드)
+            if (data.isMissingNode() || data.isNull()) {
+                log.warn("message data가 비어있습니다. op: {}", op);
+                return;
+            }
 
             Long shopId = data.path("shop_id").asLong();
 
@@ -74,7 +100,12 @@ public class ShopEventListener {
     }
 
     @KafkaListener(topics = "dbserver.mydb.menus", groupId = "menu-sync-group")
-    public void handleMenuEvent(String message) {
+    public void handleMenuEvent(@Payload(required = false) String message) {
+        if (message == null) {
+            log.info("Tombstone 메시지 수신: 로그 컴팩션을 위한 신호이므로 skip합니다.");
+            return;
+        }
+
         try {
             JsonNode root = objectMapper.readTree(message);
             String op = root.path("payload").path("op").asText();
@@ -82,6 +113,11 @@ public class ShopEventListener {
             JsonNode data = op.equals("d") ?
                     root.path("payload").path("before") :
                     root.path("payload").path("after");
+
+            if (data.isMissingNode() || data.isNull()) {
+                log.warn("message data가 비어있습니다. op: {}", op);
+                return;
+            }
 
             Long shopId = data.path("shop_id").asLong();
 

@@ -24,7 +24,7 @@ public class ShopSearchRequestDto {
 //    private int minOrderPrice; //최소주문금액 필터
 //    private boolean isOpenOnly = true; //영업중인 가게만 보기
 
-    //페이징
+    //페이징 정보
 //    private int page = 0;
 //    private int size = 10;
 

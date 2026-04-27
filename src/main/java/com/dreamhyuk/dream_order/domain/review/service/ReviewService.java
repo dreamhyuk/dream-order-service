@@ -37,4 +37,12 @@ public class ReviewService {
 
         return review.getId();
     }
+
+    @Transactional
+    public void deleteReview(Long reviewId, Long customerId) {
+        customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("customer not found"));
+
+        reviewRepository.deleteById(reviewId);
+    }
 }

@@ -82,6 +82,13 @@ public class ShopService {
                 request.getDeliveryTypes());
     }
 
+    @Transactional
+    public void deleteShop(Long shopId, Long ownerId) throws AccessDeniedException {
+        Shop shop = validateShopOwner(shopId, ownerId);
+
+        shopRepository.delete(shop);
+    }
+
     //가게 소유권 검증
     private Shop validateShopOwner(Long shopId, Long ownerId) throws AccessDeniedException {
         Shop shop = shopRepository.findById(shopId)
@@ -139,7 +146,7 @@ public class ShopService {
             queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "_score"));
         }
 
-        // 페이징 처리 (이건 성능을 위해 꼭 넣어주세요!)
+        // 페이징 처리 (이건 성능을 위해 넣어주는 게 좋다!)
         queryBuilder.withPageable(PageRequest.of(command.getPage(), 10));
 */
 

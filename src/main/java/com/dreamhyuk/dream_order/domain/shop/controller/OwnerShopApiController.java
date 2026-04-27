@@ -44,4 +44,15 @@ public class OwnerShopApiController {
 
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{shopId}")
+    public ResponseEntity<Void> deleteShop(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long shopId) throws AccessDeniedException {
+
+        shopService.deleteShop(shopId, userDetails.getMemberId());
+
+        return ResponseEntity.noContent().build();
+
+    }
 }
