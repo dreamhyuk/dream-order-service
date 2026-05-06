@@ -8,16 +8,16 @@ import org.springframework.util.StringUtils;
 public class ShopSearchCommand {
 
     private final String keyword;
-    private final String categoryType;
+    private final Long categoryId;
 
-    public ShopSearchCommand(String keyword, String categoryType) {
+    public ShopSearchCommand(String keyword, Long categoryId) {
         this.keyword = keyword;
 
         //정책: 키워드가 있으면 카테고리는 무시한다
-        this.categoryType = StringUtils.hasText(keyword) ? null : categoryType;
+        this.categoryId = StringUtils.hasText(keyword) ? null : categoryId;
     }
 
-    public static ShopSearchCommand of(String keyword, String categoryType) {
-        return new ShopSearchCommand(keyword, categoryType);
+    public static ShopSearchCommand of(String keyword, Long categoryId) {
+        return new ShopSearchCommand(keyword, categoryId);
     }
 }

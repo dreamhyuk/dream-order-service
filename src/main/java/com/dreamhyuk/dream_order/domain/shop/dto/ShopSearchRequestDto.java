@@ -11,7 +11,7 @@ public class ShopSearchRequestDto {
 
     //검색 핵심 조건
     private String keyword;      // 검색어 (키워드 검색 시 사용)
-    private String categoryType;     // 카테고리 코드 (카테고리 검색 시 사용)
+    private Long categoryId;     // 카테고리 코드 (카테고리 검색 시 사용)
 
     //위치 정보
 //    @NotNull
@@ -30,7 +30,6 @@ public class ShopSearchRequestDto {
 
 
     public ShopSearchCommand toCommand() {
-        return ShopSearchCommand.of(this.keyword, this.categoryType);
+        return ShopSearchCommand.of(this.keyword, this.categoryId);
     }
-
 }

@@ -44,23 +44,30 @@ public class MenuService {
     }
 
     @Transactional
-    public void updateGroup(Long ownerId, Long shopId, Long menuGroupId, MenuGroupUpdateRequestDto request) throws AccessDeniedException {
+    public void updateGroup(Long ownerId, Long shopId, Long groupId, MenuGroupUpdateRequestDto request) throws AccessDeniedException {
         //소유권 검증 (가게 사장님이 맞는가?)
         validateShopOwner(shopId, ownerId);
         //소속 검증
-        MenuGroup menuGroup = validateMenuGroupInShop(menuGroupId, shopId);
+        MenuGroup menuGroup = validateMenuGroupInShop(groupId, shopId);
 
         menuGroup.update(request.getGroupName(), request.getPriority());
     }
 
+    @Transactional
+    public void deleteGroup(Long ownerId, Long shopId, Long groupId) throws AccessDeniedException {
+        validateShopOwner(shopId, ownerId);
+        MenuGroup group = validateMenuGroupInShop(groupId, shopId);
+
+        menuGroupRepository.delete(group);
+    }
 
     // --- Menu 관련 로직 ---
     @Transactional
-    public Long saveMenu(Long ownerId, Long shopId, Long menuGroupId, MenuCreateRequestDto request) throws Exception {
+    public Long saveMenu(Long ownerId, Long shopId, Long groupId, MenuCreateRequestDto request) throws Exception {
         //소유권 검증 (가게 사장님이 맞는가?)
         validateShopOwner(shopId, ownerId);
         //그룹 검증 (해당 메뉴그룹이 이 가게 소속인가?)
-        MenuGroup menuGroup = validateMenuGroupInShop(menuGroupId, shopId);
+        MenuGroup menuGroup = validateMenuGroupInShop(groupId, shopId);
 
         Menu menu = Menu.createMenu(
                 request.getMenuName(),
@@ -75,13 +82,19 @@ public class MenuService {
     }
 
     @Transactional
-    public void updateMenu(Long ownerId, Long shopId, Long menuGroupId, Long menuId, MenuUpdateRequestDto request) throws AccessDeniedException {
+    public void updateMenu(Long ownerId, Long shopId, Long menuId, MenuUpdateRequestDto request) throws AccessDeniedException {
         validateShopOwner(shopId, ownerId);
-        MenuGroup menuGroup = validateMenuGroupInShop(menuGroupId, shopId);
 
         Menu menu = menuRepository.findById(menuId).orElseThrow();
 
         menu.update(request.getMenuName(), request.getPrice());
+    }
+
+    @Transactional
+    public void deleteMenu(Long ownerId, Long shopId, Long menuId) throws AccessDeniedException{
+        validateShopOwner(shopId, ownerId);
+
+        menuRepository.deleteById(menuId);
     }
 
     /** 검증 로직 */

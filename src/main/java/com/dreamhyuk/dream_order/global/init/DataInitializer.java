@@ -118,12 +118,12 @@ public class DataInitializer implements CommandLineRunner {
 
         //카테고리 데이터
         if (categoryRepository.count() == 0) {
-            categoryRepository.save(new Category("CHICKEN", "치킨"));
-            categoryRepository.save(new Category("KOREAN", "한식"));
-            categoryRepository.save(new Category("PIZZA", "피자"));
-            categoryRepository.save(new Category("FAST_FOOD", "패스트푸드"));
-            categoryRepository.save(new Category("CHINESE", "중식"));
-            categoryRepository.save(new Category("CAFE", "카페.디저트"));
+            categoryRepository.save(Category.createCategory("CHICKEN", "치킨", 1));
+            categoryRepository.save(Category.createCategory("KOREAN", "한식", 2));
+            categoryRepository.save(Category.createCategory("PIZZA", "피자", 3));
+            categoryRepository.save(Category.createCategory("FAST_FOOD", "패스트푸드", 4));
+            categoryRepository.save(Category.createCategory("CHINESE", "중식", 5));
+            categoryRepository.save(Category.createCategory("CAFE", "카페.디저트", 6));
         }
 
         // 1. Shop 데이터 생성 로직 추가

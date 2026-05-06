@@ -40,8 +40,6 @@ public class ShopDocument {
     @Field(type = FieldType.Integer)
     private Integer reviewCount;  // 리뷰 수
 
-
-    // --- 메뉴 그룹 ---
     @Field(type = FieldType.Nested) // 데이터 간의 관계 유지를 위해 Nested 권장
     private List<MenuGroupInfo> menuGroups;
 
@@ -49,8 +47,12 @@ public class ShopDocument {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class CategoryInfo {
-        @Field(type = FieldType.Keyword) // 필터링 용도는 Keyword
-        private String type; //검색 시 "categories.type"으로 접근
+        @Field(type = FieldType.Long) //내부 CategoryInfo의 id필드는 Long
+        private Long id;
+
+        @Field(type = FieldType.Keyword) //정보 전달 용도로 그대로 둬도 괜찮다
+        private String type;
+
         private String name;
     }
 
@@ -81,6 +83,7 @@ public class ShopDocument {
                 // Shop 엔티티 내부의 ShopCategory 리스트를 순회하며 CategoryInfo로 추출
                 .categories(shop.getShopCategories().stream()
                         .map(sc -> new CategoryInfo(
+                                sc.getCategory().getId(),
                                 sc.getCategory().getCategoryType(), // 고유 코드 (CHICKEN 등)
                                 sc.getCategory().getName()         // 출력될 이름 (치킨 등)
                         ))

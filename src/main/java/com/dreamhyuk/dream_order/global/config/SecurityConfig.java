@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. 공통 인증 및 토큰 관련 (누구나 접근 가능)
                         // 토큰 재발급(reissue)은 AuthController에 두는 것이 공통 관리상 유리합니다.
-                        .requestMatchers("/api/auth/reissue").permitAll()
+                        .requestMatchers("/api/auth/reissue", "/api/categories").permitAll()
 
                         // 2. 고객(Customer) 도메인 설정
                         // 가입과 로그인은 인증 없이 접근 가능해야 합니다.

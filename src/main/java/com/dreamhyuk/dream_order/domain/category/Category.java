@@ -1,9 +1,7 @@
 package com.dreamhyuk.dream_order.domain.category;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +10,8 @@ import java.util.List;
 @Table(name = "categories")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Category {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,9 +28,16 @@ public class Category {
 
     private String name; //전시용 (ex. 치킨, 피자 등..)
 
+    @Builder.Default
+    private int priority = 0;
+//    private String imageUrl;
 
-    public Category(String categoryType, String name) {
-        this.categoryType = categoryType;
-        this.name = name;
+
+    public static Category createCategory(String categoryType, String name, int priority) {
+        return Category.builder()
+                .categoryType(categoryType)
+                .name(name)
+                .priority(priority)
+                .build();
     }
 }

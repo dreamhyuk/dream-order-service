@@ -125,8 +125,8 @@ public class ShopService {
         }
 
         //2. 카테고리 필터 추가
-        if (StringUtils.hasText(command.getCategoryType())) {
-            boolQuery.filter(f -> f.term(t -> t.field("categories.type").value(command.getCategoryType())));
+        if (command.getCategoryId() != null) {
+            boolQuery.filter(f -> f.term(t -> t.field("categories.id").value(command.getCategoryId())));
         }
 
         //쿼리 실행 (기본 10건으로 실행)
