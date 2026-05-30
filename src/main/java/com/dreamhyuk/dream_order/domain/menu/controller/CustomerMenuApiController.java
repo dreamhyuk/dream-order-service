@@ -1,8 +1,6 @@
 package com.dreamhyuk.dream_order.domain.menu.controller;
 
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuDetailResponseDto;
-import com.dreamhyuk.dream_order.domain.menu.dto.MenuGroupResponseDto;
-import com.dreamhyuk.dream_order.domain.menu.dto.ShopMenuResponseDto;
 import com.dreamhyuk.dream_order.domain.menu.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,15 +17,6 @@ import java.util.List;
 public class CustomerMenuApiController {
 
     private final MenuService menuService;
-
-
-    @GetMapping("/shops/{shopId}/menus")
-    public ResponseEntity<List<MenuGroupResponseDto>> getMenus(@PathVariable Long shopId) {
-
-        List<MenuGroupResponseDto> responses = menuService.getMenus(shopId);
-
-        return ResponseEntity.ok(responses);
-    }
 
     @GetMapping("/shops/{shopId}/menus/{menuId}")
     public ResponseEntity<MenuDetailResponseDto> getMenuDetail(

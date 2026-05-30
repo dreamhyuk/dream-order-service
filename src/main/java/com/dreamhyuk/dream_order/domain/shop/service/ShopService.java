@@ -8,9 +8,11 @@ import com.dreamhyuk.dream_order.domain.category.CategoryRepository;
 import com.dreamhyuk.dream_order.domain.common.Address;
 import com.dreamhyuk.dream_order.domain.member.owner.Owner;
 import com.dreamhyuk.dream_order.domain.member.owner.OwnerRepository;
+import com.dreamhyuk.dream_order.domain.review.repository.ReviewRepository;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
+import com.dreamhyuk.dream_order.domain.shop.dto.ShopResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopSearchResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopUpdateRequestDto;
 import jakarta.persistence.EntityNotFoundException;
@@ -38,7 +40,15 @@ public class ShopService {
     private final ShopRepository shopRepository;
     private final OwnerRepository ownerRepository;
     private final CategoryRepository categoryRepository;
+    private final ReviewRepository reviewRepository;
     private final ElasticsearchOperations elasticsearchOperations;
+
+    public ShopResponseDto getShopDetail(Long shopId) {
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new EntityNotFoundException("Not Found this shop"));
+
+        return ShopResponseDto.from(shop);
+    }
 
     @Transactional
     public Long saveShop(ShopCommand.Create command) {

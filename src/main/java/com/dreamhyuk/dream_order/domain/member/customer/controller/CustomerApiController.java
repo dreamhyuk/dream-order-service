@@ -5,12 +5,14 @@ import com.dreamhyuk.dream_order.domain.auth.dto.AuthResponseDto;
 import com.dreamhyuk.dream_order.domain.auth.service.AuthService;
 import com.dreamhyuk.dream_order.domain.member.customer.service.CustomerCommand;
 import com.dreamhyuk.dream_order.domain.member.customer.service.CustomerService;
+import com.dreamhyuk.dream_order.global.userdetails.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -23,7 +25,9 @@ public class CustomerApiController {
     private final CustomerService customerService;
     private final AuthService authService;
 
-    /** 회원 가입 */
+    /**
+     * 회원 가입
+     */
     @PostMapping("/signup")
     public ResponseEntity<Long> signup(@Valid @RequestBody CustomerRequestDto.SignUp request) {
         CustomerCommand.SingUp command = request.toCommand();
@@ -33,7 +37,9 @@ public class CustomerApiController {
         return ResponseEntity.ok(id);
     }
 
-    /** 로그인 */
+    /**
+     * 로그인
+     */
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto.Token> login(
             @Valid @RequestBody AuthRequestDto.Login request, HttpServletResponse response) {
@@ -55,7 +61,20 @@ public class CustomerApiController {
     }
 
 
-    /** 조회 */
-//    @GetMapping("/me")
-//    public String status()
+    /**
+     * 조회
+     */
+    @GetMapping("/me")
+    public ResponseEntity<CustomerResponseDto.Profile> getMyProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // 1. 토큰/세션에서 현재 로그인한 고객의 ID를 추출합니다.
+        Long customerId = userDetails.getMemberId();
+
+        // 2. 서비스를 통해 DB에서 회원 정보를 조회합니다.
+        CustomerResponseDto.Profile response = customerService.findProfileById(customerId);
+
+        // 3. 유저 정보를 반환합니다.
+        return ResponseEntity.ok(response);
+    }
 }

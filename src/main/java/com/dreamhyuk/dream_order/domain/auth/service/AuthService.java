@@ -71,7 +71,6 @@ public class AuthService {
             //이미 로그아웃 되었거나 토큰이 없는 경우
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
-
     }
 
     /** 토큰 재발급 */

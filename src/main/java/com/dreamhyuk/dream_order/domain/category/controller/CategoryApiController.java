@@ -22,5 +22,4 @@ public class CategoryApiController {
 
         return ResponseEntity.ok(categoryService.getCategories());
     }
-
 }
