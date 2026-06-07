@@ -1,5 +1,8 @@
 package com.dreamhyuk.dream_order.domain.order.service;
 
+import com.dreamhyuk.dream_order.domain.cart.RedisCart;
+import com.dreamhyuk.dream_order.domain.cart.RedisCartItem;
+import com.dreamhyuk.dream_order.domain.cart.service.CartService;
 import com.dreamhyuk.dream_order.domain.common.Address;
 import com.dreamhyuk.dream_order.domain.member.customer.Customer;
 import com.dreamhyuk.dream_order.domain.member.customer.CustomerRepository;
@@ -38,12 +41,78 @@ public class OrderService {
     private final ShopRepository shopRepository;
     private final MenuRepository menuRepository;
     private final MyAddressRepository myAddressRepository;
+    private final CartService cartService;
+
+    @Transactional
+    public Long saveOrderFromCart(Long customerId, OrderCommand.CreateFromCart command) {
+        // 1. 고객 및 배달 지원 여부 조회
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new EntityNotFoundException("고객 정보를 찾을 수 없습니다."));
+
+        // 2. Redis에서 해당 유저의 장바구니 조회
+        RedisCart redisCart = cartService.getCart(customerId);
+        if (redisCart.getItems().isEmpty()) {
+            throw new IllegalStateException("장바구니가 비어 있어 주문을 진행할 수 없습니다.");
+        }
+
+        // 3. 장바구니에 담긴 가게 ID로 가게 조회 및 검증
+        Shop shop = shopRepository.findById(redisCart.getShopId())
+                .orElseThrow(() -> new EntityNotFoundException("가게 정보를 찾을 수 없습니다."));
+
+        shop.validateSupport(command.getDeliveryType());
+
+        // 4. 메뉴 조회 및 실시간 가격 변조 검증
+        // Redis에 담긴 메뉴 ID들을 모아서 한 방에 조회 (In-Query)
+        List<Long> menuIds = redisCart.getItems().stream()
+                .map(RedisCartItem::getMenuId)
+                .toList();
+        List<Menu> menus = menuRepository.findAllById(menuIds);
+
+        // Redis에 저장된 장바구니 아이템들을 쉽게 매핑하기 위해 Map으로 변환
+        Map<Long, RedisCartItem> cartItemMap = redisCart.getItems().stream()
+                .collect(Collectors.toMap(RedisCartItem::getMenuId, item -> item));
+
+        for (Menu menu : menus) {
+            // (안전장치) RDB 최신 가게 ID와 맞는지 한 번 더 검증
+            if (!menu.getShopId().equals(redisCart.getShopId())) {
+                throw new IllegalArgumentException("해당 가게의 메뉴가 아닌 상품이 포함되어 있습니다.");
+            }
+
+            // 장바구니에 담았던 시점의 가격과 RDB 최신 가격 대조 (위변조 방지)
+            RedisCartItem cartItem = cartItemMap.get(menu.getId());
+            if (menu.getPrice() != cartItem.getPrice()) {
+                throw new IllegalArgumentException(menu.getMenuName() + " 메뉴의 가격이 변동되었습니다. 장바구니를 확인해주세요.");
+            }
+        }
+
+        // 5. 주소 및 배송 정보 결정
+        Address address = resolveAddress2(command, customerId); // 필요시 고객 기본주소 등 활용
+        Delivery delivery = Delivery.createDelivery(address, command.getDeliveryType());
+
+        // 6. Redis 장바구니 데이터를 바탕으로 OrderItem 엔티티 생성
+        List<OrderItem> orderItems = menus.stream()
+                .map(m -> {
+                    RedisCartItem cartItem = cartItemMap.get(m.getId());
+                    return OrderItem.createOrderItem(m, m.getPrice(), cartItem.getCount());
+                })
+                .toList();
+
+        // 7. 주문 생성 및 DB 저장
+        Order order = Order.createOrder(shop, customer, delivery, command.getDeliveryType(), orderItems);
+        orderRepository.save(order);
+
+        // 8.주문이 성공적으로 저장되었으므로 Redis 장바구니를 시원하게 비워줍니다!
+        cartService.clearCart(customerId);
+
+        return order.getId();
+    }
 
     @Transactional
     public Long saveOrder(OrderCommand.Create command) {
         //조회
         Customer customer = customerRepository.findById(command.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException("고객 정보를 찾을 수 없습니다."));
+
         Shop shop = shopRepository.findById(command.getShopId())
                 .orElseThrow(() -> new EntityNotFoundException("가게 정보를 찾을 수 없습니다."));
 
@@ -233,6 +302,37 @@ public class OrderService {
         }
 
         //3. 모든 시도가 실패하면 예외 발생
+        throw new IllegalArgumentException("배송지 주소는 필수입니다.");
+    }
+
+
+    private Address resolveAddress2(OrderCommand.CreateFromCart command, Long customerId) {
+
+        // 포장이면 주소 추출 없이 바로 null 반환
+        if (command.getDeliveryType().isTakeout()) {
+            return null;
+        }
+
+        // 배달인 경우에만 주소를 찾음
+        // 1. myAddressId가 있는 경우 DB 조회
+        if (command.getMyAddressId() != null) {
+            MyAddress myAddress = myAddressRepository.findById(command.getMyAddressId())
+                    .orElseThrow(() -> new EntityNotFoundException("선택하신 주소록 정보를 찾을 수 없습니다."));
+
+            // 🌟 [보안 핵심] 주소록의 소유주 ID와 현재 주문을 요청한 로그인 유저 ID가 일치하는지 검증!
+            if (!myAddress.getCustomer().getId().equals(customerId)) {
+                throw new IllegalArgumentException("잘못된 배송지 접근입니다.");
+            }
+
+            return myAddress.getAddress();
+        }
+
+        // 2. 위에서 주소를 못 찾고, 직접 입력 주소가 있는 경우
+        if (command.getDirectAddress() != null) {
+            return command.getDirectAddress();
+        }
+
+        // 3. 모든 시도가 실패하면 예외 발생
         throw new IllegalArgumentException("배송지 주소는 필수입니다.");
     }
 }

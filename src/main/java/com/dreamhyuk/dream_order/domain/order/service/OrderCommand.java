@@ -43,4 +43,15 @@ public class OrderCommand {
         }
     }
 
+    @Getter
+    @Builder
+    public static class CreateFromCart {
+        // ❌ customerId 삭제! (서비스 파라미터로 직접 넘길 것이므로)
+
+        // ⭕ 유저가 주문서 화면에서 직접 고른 데이터들만 명시
+        private final DeliveryType deliveryType;
+        private final Long myAddressId;
+        private final Address directAddress;
+    }
+
 }

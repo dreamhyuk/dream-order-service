@@ -62,14 +62,14 @@ public class Order {
         customer.getOrders().add(this);
     }
 
-    public void addOrderItem(OrderItem orderItem) {
-        orderItems.add(orderItem);
-        orderItem.connectOrder(this);
-    }
-
     public void setDelivery(Delivery delivery) {
         this.delivery = delivery;
         delivery.connectOrder(this);
+    }
+
+    public void addOrderItem(OrderItem orderItem) {
+        orderItems.add(orderItem);
+        orderItem.connectOrder(this);
     }
 
     //== 생성 메서드 ==//

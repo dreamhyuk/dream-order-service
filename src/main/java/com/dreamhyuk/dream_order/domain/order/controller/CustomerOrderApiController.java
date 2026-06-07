@@ -1,6 +1,7 @@
 package com.dreamhyuk.dream_order.domain.order.controller;
 
 import com.dreamhyuk.dream_order.domain.order.dto.OrderDetailResponseDto;
+import com.dreamhyuk.dream_order.domain.order.dto.OrderRequest;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderRequestDto;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderResponseDto;
 import com.dreamhyuk.dream_order.domain.order.service.OrderCommand;
@@ -29,6 +30,20 @@ public class CustomerOrderApiController {
 
 
     @PostMapping
+    public ResponseEntity<Long> createOrderFromCart(
+            // 💡 1. 세션이나 JWT 토큰에서 Spring Security가 안전하게 검증하여 꺼내준 유저 정보
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            // 💡 2. 프론트엔드가 HTTP Body로 보낸 배달방식, 주소 정보 (DTO)
+            @RequestBody OrderRequest.Create request
+    ) {
+        // 🌟 인증된 유저 ID와 프론트의 요청 데이터를 각각의 파라미터로 명확하게 꽂아줍니다.
+        // request.toCommand() 내부에는 customerId를 조립하는 지저분한 코드가 들어가지 않습니다.
+        Long orderId = orderService.saveOrderFromCart(userDetails.getMemberId(), request.toCommand());
+
+        return ResponseEntity.ok(orderId);
+    }
+
+/*    @PostMapping
     public ResponseEntity<Long> createOrder(
             @RequestBody OrderRequestDto orderRequest,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -43,7 +58,7 @@ public class CustomerOrderApiController {
 
         // 4. 생성된 주문 ID 반환
         return ResponseEntity.ok(orderId);
-    }
+    }*/
 
     /**
      * 주문 조회
