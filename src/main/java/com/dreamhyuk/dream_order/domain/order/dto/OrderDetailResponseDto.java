@@ -45,6 +45,4 @@ public class OrderDetailResponseDto {
 //                .requestMessage(order.getRequestMessage())
                 .build();
     }
-
-
 }

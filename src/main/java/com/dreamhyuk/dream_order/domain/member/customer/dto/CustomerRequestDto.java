@@ -1,4 +1,4 @@
-package com.dreamhyuk.dream_order.domain.member.customer.controller;
+package com.dreamhyuk.dream_order.domain.member.customer.dto;
 
 import com.dreamhyuk.dream_order.domain.member.customer.service.CustomerCommand;
 import jakarta.validation.constraints.Email;

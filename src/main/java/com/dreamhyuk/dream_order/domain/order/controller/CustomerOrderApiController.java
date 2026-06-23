@@ -31,9 +31,7 @@ public class CustomerOrderApiController {
 
     @PostMapping
     public ResponseEntity<Long> createOrderFromCart(
-            // 💡 1. 세션이나 JWT 토큰에서 Spring Security가 안전하게 검증하여 꺼내준 유저 정보
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            // 💡 2. 프론트엔드가 HTTP Body로 보낸 배달방식, 주소 정보 (DTO)
             @RequestBody OrderRequest.Create request
     ) {
         // 🌟 인증된 유저 ID와 프론트의 요청 데이터를 각각의 파라미터로 명확하게 꽂아줍니다.

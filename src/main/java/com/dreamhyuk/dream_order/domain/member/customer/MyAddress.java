@@ -2,13 +2,16 @@ package com.dreamhyuk.dream_order.domain.member.customer;
 
 import com.dreamhyuk.dream_order.domain.common.Address;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 import static jakarta.persistence.FetchType.*;
 
 @Entity
 @Table(name = "my_addresses")
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MyAddress {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,5 +25,6 @@ public class MyAddress {
     @Embedded
     private Address address;
 
-    private String nickname; // 우리집, 회사 등
+    @Column(name = "nickname")
+    private String addressName; // 우리집, 회사 등
 }

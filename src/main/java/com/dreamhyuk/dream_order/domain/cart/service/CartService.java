@@ -4,6 +4,10 @@ import com.dreamhyuk.dream_order.domain.cart.RedisCart;
 import com.dreamhyuk.dream_order.domain.cart.RedisCartItem;
 import com.dreamhyuk.dream_order.domain.menu.Menu;
 import com.dreamhyuk.dream_order.domain.menu.repository.MenuRepository;
+import com.dreamhyuk.dream_order.domain.shop.Shop;
+import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
+import com.dreamhyuk.dream_order.global.exception.BusinessException;
+import com.dreamhyuk.dream_order.global.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -22,25 +26,86 @@ public class CartService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final ShopRepository shopRepository;
     private final MenuRepository menuRepository;
 
     /** 장바구니에 메뉴를 추가하고 Redis에 저장 */
     @Transactional
-    public void addMenu(Long customerId, Long shopId, Long menuId, int count) {
+    public void addMenu(Long customerId, Long shopId, Long menuId, int count, boolean force) {
+        String key = "cart:" + customerId;
+
+        String json = redisTemplate.opsForValue().get(key);
+        RedisCart cart = null; // 블록 외부에서 사용하기 위해 선언
+
+        // 🌟 1. force=true 이면 기존 장바구니 유무와 상관없이 무조건 새로 만듭니다 (초기화)
+        if (force) {
+            cart = RedisCart.createEmptyCart(String.valueOf(customerId));
+        } else if (json != null) {
+            // 기존 카트가 존재할 때 역직렬화
+            try {
+                cart = objectMapper.readValue(json, RedisCart.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Cart parsing failed!", e);
+            }
+
+            // 🌟 [핵심 방어 코드] 기존 카트에 담긴 가게 ID와 지금 요청온 가게 ID 검증
+            // 💡 cart.getShopId()가 안전하게 장바구니의 대표 가게 ID를 리턴하는지 확인해 보세요.
+            if (cart != null && cart.getShopId() != null) {
+                if (!cart.getShopId().equals(shopId)) {
+                    // 다른 가게라면 프론트엔드가 캐치할 수 있게 명확한 예외 발생
+                    throw new BusinessException(ErrorCode.DIFFERENT_SHOP_ERROR);
+                }
+            }
+        }
+
+        // 🌟 2. 장바구니가 여전히 null 이라면 (기존 데이터가 없었던 경우) 새로 생성
+        if (cart == null) {
+            cart = RedisCart.createEmptyCart(String.valueOf(customerId));
+        }
+
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new EntityNotFoundException("Shop Not Found"));
+
+        // 메뉴 조회
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new EntityNotFoundException("Menu Not Found"));
+
+        RedisCartItem cartItem = new RedisCartItem(menu.getId(), menu.getMenuName(), menu.getPrice(), count);
+
+        // 장바구니에 아이템 추가 및 가게 ID 연동
+        cart.addCartItem(cartItem, shopId, shop.getShopName());
+
+        // Redis에 재저장
+        try {
+            String updatedJson = objectMapper.writeValueAsString(cart);
+            redisTemplate.opsForValue().set(key, updatedJson, Duration.ofDays(3));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save cart to Redis", e);
+        }
+    }
+/*
+    @Transactional
+    public void addMenu(Long customerId, Long shopId, Long menuId, int count, boolean force) {
         String key = "cart:" + customerId;
 
         String json = redisTemplate.opsForValue().get(key);
         RedisCart cart;
 
-        if (json != null) {
+        //기존 카트가 존재하고, 강제 초기화(force) 요청이 아닐 때만 가게 검증
+        if (json != null && !force) {
             //기존 카트가 있으면 객체로 복원 (역직렬화)
             try {
                 cart = objectMapper.readValue(json, RedisCart.class);
             } catch (Exception e) {
                 throw new RuntimeException("Cart parsing failed!", e);
             }
+
+            //[핵심] 기존 카트에 담긴 가게 ID와 지금 담으려는 가게 ID가 다르면 예외를 던진다
+            if (cart.getShopId() != null && !cart.getShopId().equals(shopId)) {
+                throw new IllegalArgumentException("DIFFERENT_SHOP_ERROR");
+            }
         } else {
-            //기존 카트가 없으면 새로 만든다
+            //기존 카트가 없거나, 유저가 비우기에 동의(force=true)했다면 새 카트를 만든다 (덮어쓰기)
             cart = RedisCart.createEmptyCart(String.valueOf(customerId));
         }
 
@@ -60,6 +125,7 @@ public class CartService {
             throw new RuntimeException("Failed!!", e);
         }
     }
+*/
 
     /** OrderService 등 외부에서 필요할 때 장바구니 객체를 꺼내주는 메서드 */
     public RedisCart getCart(Long customerId) {

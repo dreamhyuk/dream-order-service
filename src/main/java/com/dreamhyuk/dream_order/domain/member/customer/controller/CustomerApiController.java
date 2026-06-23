@@ -3,6 +3,11 @@ package com.dreamhyuk.dream_order.domain.member.customer.controller;
 import com.dreamhyuk.dream_order.domain.auth.dto.AuthRequestDto;
 import com.dreamhyuk.dream_order.domain.auth.dto.AuthResponseDto;
 import com.dreamhyuk.dream_order.domain.auth.service.AuthService;
+import com.dreamhyuk.dream_order.domain.member.customer.dto.CustomerRequestDto;
+import com.dreamhyuk.dream_order.domain.member.customer.dto.CustomerResponseDto;
+import com.dreamhyuk.dream_order.domain.member.customer.dto.MyAddressRequest;
+import com.dreamhyuk.dream_order.domain.member.customer.dto.MyAddressResponse;
+import com.dreamhyuk.dream_order.domain.member.customer.service.AddressCommand;
 import com.dreamhyuk.dream_order.domain.member.customer.service.CustomerCommand;
 import com.dreamhyuk.dream_order.domain.member.customer.service.CustomerService;
 import com.dreamhyuk.dream_order.global.userdetails.CustomUserDetails;
@@ -10,12 +15,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -61,9 +68,8 @@ public class CustomerApiController {
     }
 
 
-    /**
-     * 조회
-     */
+    /** 프로필 조회 */
+    //프로필 조회
     @GetMapping("/me")
     public ResponseEntity<CustomerResponseDto.Profile> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -77,4 +83,32 @@ public class CustomerApiController {
         // 3. 유저 정보를 반환합니다.
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 주소록 등록
+     */
+    @PostMapping("/addresses")
+    public ResponseEntity<Long> addAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyAddressRequest.Register request
+    ) {
+
+        AddressCommand.Register command = request.toCommand();
+
+        Long addressId = customerService.saveAddress(userDetails.getMemberId(), command);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(addressId);
+    }
+
+    /** 주소록 조회 */
+    @GetMapping("/addresses")
+    public ResponseEntity<List<MyAddressResponse>> getMyAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        List<MyAddressResponse> address = customerService.getMyAddresses(userDetails.getMemberId());
+
+        return ResponseEntity.ok(address);
+    }
+
 }

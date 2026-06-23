@@ -63,7 +63,7 @@ public class AuthService {
     /** 로그아웃 */
     @Transactional
     public void logout(Long memberId, MemberRole role) {
-        String redisKey = "RT:" + role + ":" + memberId;
+        String redisKey = "RT:" + role.toRedisPrefix() + ":" + memberId;
 
         if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
             redisTemplate.delete(redisKey);

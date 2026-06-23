@@ -12,18 +12,20 @@ public class RedisCart {
 
     private String customerId;
     private Long shopId;
+    private String shopName;
     private List<RedisCartItem> items = new ArrayList<>();
 
     public static RedisCart createEmptyCart(String customerId) {
-        return new RedisCart(customerId, null, new ArrayList<>());
+        return new RedisCart(customerId, null, null, new ArrayList<>());
     }
 
-    public void addCartItem(RedisCartItem cartItem, Long shopId) {
+    public void addCartItem(RedisCartItem cartItem, Long shopId, String shopName) {
         if (this.shopId != null && !this.shopId.equals(shopId)) {
             throw new IllegalArgumentException("장바구니에는 같은 가게의 메뉴만 담을 수 있습니다.");
         }
         if (this.shopId == null) {
             this.shopId = shopId;
+            this.shopName = shopName;
         }
 
         this.items.stream()
@@ -49,6 +51,7 @@ public class RedisCart {
         // 이제 다른 가게 메뉴도 새로 담을 수 있어야 하므로, 묶여있던가게 ID(shopId)를 null로 초기화합니다.
         if (this.items.isEmpty()) {
             this.shopId = null;
+            this.shopName = null;
         }
     }
 }

@@ -23,14 +23,16 @@ public class CartController {
     @PostMapping
     public ResponseEntity<RedisCart> addMenuToCart(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody CartRequestDto.Add request
+            @Valid @RequestBody CartRequestDto.Add request,
+            @RequestParam(defaultValue = "false") boolean force
     ) {
 
         cartService.addMenu(
                 userDetails.getMemberId(),
                 request.getShopId(),
                 request.getMenuId(),
-                request.getCount()
+                request.getCount(),
+                force
         );
 
         RedisCart updatedCart = cartService.getCart(userDetails.getMemberId());
