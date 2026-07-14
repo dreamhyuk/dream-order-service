@@ -1,6 +1,7 @@
 package com.dreamhyuk.dream_order.domain.shop.controller;
 
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopCreateRequestDto;
+import com.dreamhyuk.dream_order.domain.shop.dto.ShopSummaryResponse;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopUpdateRequestDto;
 import com.dreamhyuk.dream_order.domain.shop.service.ShopCommand;
 import com.dreamhyuk.dream_order.domain.shop.service.ShopService;
@@ -11,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +32,15 @@ public class OwnerShopApiController {
         Long shopId = shopService.saveShop(command);
 
         return ResponseEntity.ok(shopId);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ShopSummaryResponse>> getMyShops(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        List<ShopSummaryResponse> results = shopService.getShopsByOwner(userDetails.getMemberId());
+
+        return ResponseEntity.ok(results);
     }
 
     @PatchMapping("/{shopId}")

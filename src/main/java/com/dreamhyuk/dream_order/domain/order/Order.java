@@ -131,7 +131,7 @@ public class Order {
 
     /** 주문 취소 */
     public void cancel() {
-        if (this.status != OrderStatus.PENDING || this.status != OrderStatus.ACCEPTED) {
+        if (this.status != OrderStatus.PENDING && this.status != OrderStatus.ACCEPTED) {
             throw new IllegalStateException("조리를 시작한 상품은 취소할 수 없습니다.");
         }
 
@@ -144,7 +144,7 @@ public class Order {
      */
     public int getTotalOrderPrice() {
         return orderItems.stream()
-                .mapToInt(OrderItem::getOrderPrice)
+                .mapToInt(OrderItem::getTotalPrice)
                 .sum();
     }
 }

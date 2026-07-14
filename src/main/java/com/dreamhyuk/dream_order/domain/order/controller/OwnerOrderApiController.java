@@ -1,6 +1,7 @@
 package com.dreamhyuk.dream_order.domain.order.controller;
 
 import com.dreamhyuk.dream_order.domain.order.Order;
+import com.dreamhyuk.dream_order.domain.order.dto.OrderSummaryResponse;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderUpdateResponseDto;
 import com.dreamhyuk.dream_order.domain.order.service.OrderService;
 import com.dreamhyuk.dream_order.global.userdetails.CustomUserDetails;
@@ -10,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/owners/orders")
@@ -17,6 +20,15 @@ import org.springframework.web.bind.annotation.*;
 public class OwnerOrderApiController {
 
     private final OrderService orderService;
+
+    /**
+     * 사장님 특정 매장의 주문 목록 전체 조회
+     */
+    @GetMapping
+    public ResponseEntity<List<OrderSummaryResponse>> getShopOrders(@RequestParam("shopId") Long shopId) {
+        List<OrderSummaryResponse> responses = orderService.findOrdersByShopId(shopId);
+        return ResponseEntity.ok(responses);
+    }
 
     @PatchMapping("/{orderId}/accept")
     public ResponseEntity<OrderUpdateResponseDto> acceptOrder(
@@ -64,6 +76,5 @@ public class OwnerOrderApiController {
 
         return ResponseEntity.ok(response);
     }
-
 
 }

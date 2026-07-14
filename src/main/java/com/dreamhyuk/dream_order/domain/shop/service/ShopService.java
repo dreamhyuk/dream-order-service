@@ -14,6 +14,7 @@ import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopSearchResponseDto;
+import com.dreamhyuk.dream_order.domain.shop.dto.ShopSummaryResponse;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopUpdateRequestDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,9 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.util.StringUtils;
 
 import java.nio.file.AccessDeniedException;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -167,6 +170,14 @@ public class ShopService {
         return searchHits.getSearchHits().stream()
                 .map(hit -> ShopSearchResponseDto.from(hit.getContent()))
                 .toList();
+    }
+
+
+    /** Owner */
+    public List<ShopSummaryResponse> getShopsByOwner(Long ownerId) {
+        return shopRepository.findByOwnerId(ownerId).stream()
+                .map(ShopSummaryResponse::from)
+                .collect(Collectors.toList());
     }
 
 }

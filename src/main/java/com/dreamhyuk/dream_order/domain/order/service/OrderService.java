@@ -16,6 +16,7 @@ import com.dreamhyuk.dream_order.domain.order.OrderItem;
 import com.dreamhyuk.dream_order.domain.order.OrderRepository;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderDetailResponseDto;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderResponseDto;
+import com.dreamhyuk.dream_order.domain.order.dto.OrderSummaryResponse;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
 import com.dreamhyuk.dream_order.global.exception.BusinessException;
@@ -44,6 +45,14 @@ public class OrderService {
     private final MenuRepository menuRepository;
     private final MyAddressRepository myAddressRepository;
     private final CartService cartService;
+
+    public List<OrderSummaryResponse> findOrdersByShopId(Long shopId) {
+        List<Order> orders = orderRepository.findByShopId(shopId);
+
+        return orders.stream()
+                .map(OrderSummaryResponse::from)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public Long saveOrderFromCart(Long customerId, OrderCommand.CreateFromCart command) {

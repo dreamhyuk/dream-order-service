@@ -70,6 +70,7 @@ public class SecurityConfig {
 
         // 프론트엔드 Expo 웹 서버 주소를 정확히 허용합니다.
         configuration.addAllowedOrigin("http://localhost:8081");
+        configuration.addAllowedOrigin("http://localhost:8082");
         // GET, POST, PUT, DELETE, OPTIONS 등 모든 HTTP 메서드를 허용합니다.
         configuration.addAllowedMethod("*");
         // Authorization, Content-Type 등 프론트가 보낼 모든 헤더를 허용합니다.
