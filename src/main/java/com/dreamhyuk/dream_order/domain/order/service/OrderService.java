@@ -4,6 +4,7 @@ import com.dreamhyuk.dream_order.domain.cart.RedisCart;
 import com.dreamhyuk.dream_order.domain.cart.RedisCartItem;
 import com.dreamhyuk.dream_order.domain.cart.service.CartService;
 import com.dreamhyuk.dream_order.domain.common.Address;
+import com.dreamhyuk.dream_order.domain.inventory.service.InventoryService;
 import com.dreamhyuk.dream_order.domain.member.customer.Customer;
 import com.dreamhyuk.dream_order.domain.member.customer.CustomerRepository;
 import com.dreamhyuk.dream_order.domain.member.customer.MyAddress;
@@ -14,9 +15,12 @@ import com.dreamhyuk.dream_order.domain.delivery.Delivery;
 import com.dreamhyuk.dream_order.domain.order.Order;
 import com.dreamhyuk.dream_order.domain.order.OrderItem;
 import com.dreamhyuk.dream_order.domain.order.OrderRepository;
+import com.dreamhyuk.dream_order.domain.order.OrderStatus;
+import com.dreamhyuk.dream_order.domain.order.OrderType;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderDetailResponseDto;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderResponseDto;
 import com.dreamhyuk.dream_order.domain.order.dto.OrderSummaryResponse;
+import com.dreamhyuk.dream_order.domain.payment.service.PaymentService;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
 import com.dreamhyuk.dream_order.global.exception.BusinessException;
@@ -45,9 +49,12 @@ public class OrderService {
     private final MenuRepository menuRepository;
     private final MyAddressRepository myAddressRepository;
     private final CartService cartService;
+    private final InventoryService inventoryService;
+    private final PaymentService paymentService;
+    private final DeliveryAddressResolver deliveryAddressResolver;
 
     public List<OrderSummaryResponse> findOrdersByShopId(Long shopId) {
-        List<Order> orders = orderRepository.findByShopId(shopId);
+        List<Order> orders = orderRepository.findByOrderTypeAndSellerId(OrderType.FOOD, shopId);
 
         return orders.stream()
                 .map(OrderSummaryResponse::from)
@@ -100,6 +107,11 @@ public class OrderService {
             if (menu.getPrice() != cartItem.getPrice()) {
                 throw new BusinessException(ErrorCode.MENU_PRICE_CHANGED); // "메뉴의 가격이 변동되었습니다."
             }
+
+            // 장바구니에 담은 뒤 품절된 메뉴는 주문할 수 없다
+            if (menu.isSoldOut()) {
+                throw new BusinessException(ErrorCode.MENU_SOLD_OUT);
+            }
         }
 
         // 5. 주소 및 배송 정보 결정
@@ -110,12 +122,13 @@ public class OrderService {
         List<OrderItem> orderItems = menus.stream()
                 .map(m -> {
                     RedisCartItem cartItem = cartItemMap.get(m.getId());
-                    return OrderItem.createOrderItem(m, m.getPrice(), cartItem.getCount());
+                    return OrderItem.createOrderItem(m.getId(), m.getMenuName(), m.getPrice(), cartItem.getCount());
                 })
                 .toList();
 
         // 7. 주문 생성 및 DB 저장
-        Order order = Order.createOrder(shop, customer, delivery, command.getDeliveryType(), orderItems);
+        Order order = Order.createOrder(OrderType.FOOD, shop.getId(), shop.getShopName(), customer.getId(),
+                delivery, command.getDeliveryType(), orderItems);
         orderRepository.save(order);
 
         // 8.주문이 성공적으로 저장되었으므로 Redis 장바구니를 시원하게 비워줍니다!
@@ -155,11 +168,12 @@ public class OrderService {
 
         //주문상품 생성
         List<OrderItem> orderItems = menus.stream()
-                .map(m -> OrderItem.createOrderItem(m, m.getPrice(), counts.get(m.getId())))
+                .map(m -> OrderItem.createOrderItem(m.getId(), m.getMenuName(), m.getPrice(), counts.get(m.getId())))
                 .toList();
 
         //주문 생성 & 저장
-        Order order = Order.createOrder(shop, customer, delivery, command.getDeliveryType(), orderItems);
+        Order order = Order.createOrder(OrderType.FOOD, shop.getId(), shop.getShopName(), customer.getId(),
+                delivery, command.getDeliveryType(), orderItems);
         orderRepository.save(order);
 
         return order.getId();
@@ -167,11 +181,67 @@ public class OrderService {
 
 
     /**
+     * 결제 (가짜 결제). 음식 주문과 마트 주문이 같이 쓴다.
+     * 마트 주문은 결제가 완료되면 선점해 둔 재고를 확정하고, 접수할 사장님이 없으므로 바로 접수 상태가 된다.
+     * 음식 주문은 결제만 하고 사장님의 접수를 기다린다.
+     */
+    @Transactional
+    public void payOrder(Long orderId, Long customerId) {
+        Order order = findCustomerOrder(orderId, customerId);
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new BusinessException(ErrorCode.ORDER_NOT_PAYABLE);
+        }
+
+        paymentService.pay(orderId, order.getTotalOrderPrice());
+
+        if (order.getOrderType() == OrderType.MART) {
+            inventoryService.confirm(orderId);
+
+            order.accept();
+            order.getDelivery().pending();
+        }
+    }
+
+    /**
+     * 주문 취소 (고객). 음식 주문과 마트 주문이 같이 쓴다.
+     * 결제된 주문이면 결제를 취소하고, 마트 주문이면 선점한 재고를 해제한다(확정분은 복구).
+     */
+    @Transactional
+    public void cancelOrder(Long orderId, Long customerId) {
+        Order order = findCustomerOrder(orderId, customerId);
+
+        order.cancel();
+
+        if (order.getOrderType() == OrderType.MART) {
+            inventoryService.release(orderId);
+        }
+        paymentService.cancel(orderId);
+    }
+
+    //본인 주문만 조회 (남의 주문이면 존재하지 않는 것처럼 응답)
+    private Order findCustomerOrder(Long orderId, Long customerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!order.getCustomerId().equals(customerId)) {
+            throw new BusinessException(ErrorCode.ORDER_NOT_FOUND);
+        }
+
+        return order;
+    }
+
+    /**
      * 1. 주문 접수 (가게 사장님이 확인)
      */
     @Transactional
     public Order acceptOrder(Long orderId, int estimatedMinutes) {
         Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // 결제되지 않은 주문은 접수할 수 없다
+        if (!paymentService.isPaid(orderId)) {
+            throw new BusinessException(ErrorCode.PAYMENT_REQUIRED);
+        }
 
         // Order: PENDING -> ACCEPTED (접수됨)
         order.accept();
@@ -277,7 +347,7 @@ public class OrderService {
     public OrderDetailResponseDto findOrderDetail(Long orderId, Long customerId) throws AccessDeniedException {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
-        if (!order.getCustomer().getId().equals(customerId)) {
+        if (!order.getCustomerId().equals(customerId)) {
             throw new AccessDeniedException("권한이 없습니다.");
         }
 
@@ -324,28 +394,12 @@ public class OrderService {
 
 
     private Address resolveAddress2(OrderCommand.CreateFromCart command, Long customerId) {
-        // 1. 포장이면 주소 추출 없이 바로 null 반환
+        // 포장이면 주소 추출 없이 바로 null 반환
         if (command.getDeliveryType().isTakeout()) {
             return null;
         }
 
-        // 2. 주소록 ID(myAddressId)가 넘어온 경우
-        // 배달인 경우에만 주소를 찾음
-        if (command.getMyAddressId() != null) {
-            MyAddress myAddress = myAddressRepository.findByIdAndCustomerId(command.getMyAddressId(), customerId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST));
-                    //"INVALID_ADDRESS_ACCESS" 같은 에러 코드를 만들어 써도 됨
-
-            return myAddress.getAddress();
-        }
-
-        // 3. 직접 입력 주소(directAddress)가 넘어온 경우
-        if (command.getDirectAddress() != null) {
-            //만약 directAddress 내부 필드(city, street)가 비어있는지 검증이 필요하다면 처리
-            return command.getDirectAddress();
-        }
-
-        // 4. 배달인데 두 주소 정보가 모두 없는 경우
-        throw new BusinessException(ErrorCode.BAD_REQUEST); // "배송지 주소는 필수입니다."
+        // 배달이면 주소록 또는 직접 입력 주소에서 배송지를 정한다 (마트 주문과 같은 로직)
+        return deliveryAddressResolver.resolve(customerId, command.getMyAddressId(), command.getDirectAddress());
     }
 }

@@ -27,8 +27,8 @@ class ShopServiceTest {
                 .id("1")
                 .name("네네치킨 강남점")
                 .categories(List.of(
-                        new ShopDocument.CategoryInfo("CHICKEN", "치킨"),
-                        new ShopDocument.CategoryInfo("FAST_FOOD", "패스트푸드")
+                        new ShopDocument.CategoryInfo(1L, "CHICKEN", "치킨"),
+                        new ShopDocument.CategoryInfo(4L, "FAST_FOOD", "패스트푸드")
                 ))
                 .build();
 
@@ -37,7 +37,7 @@ class ShopServiceTest {
                 .id("2")
                 .name("도미노피자 서초점")
                 .categories(List.of(
-                        new ShopDocument.CategoryInfo("PIZZA", "피자")
+                        new ShopDocument.CategoryInfo(3L, "PIZZA", "피자")
                 ))
                 .build();
 

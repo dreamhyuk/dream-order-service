@@ -5,7 +5,6 @@ import com.dreamhyuk.dream_order.domain.common.Address;
 import com.dreamhyuk.dream_order.domain.member.owner.Owner;
 import com.dreamhyuk.dream_order.domain.menu.MenuGroup;
 import com.dreamhyuk.dream_order.domain.order.DeliveryType;
-import com.dreamhyuk.dream_order.domain.order.Order;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,9 +24,6 @@ public class Shop {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private Owner owner;
-
-    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL)
-    private List<Order> orders = new ArrayList<>();
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShopDeliveryType> supportedTypes = new ArrayList<>();

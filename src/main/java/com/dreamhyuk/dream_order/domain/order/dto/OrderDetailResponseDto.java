@@ -34,7 +34,7 @@ public class OrderDetailResponseDto {
     public static OrderDetailResponseDto of(Order order) {
         return OrderDetailResponseDto.builder()
                 .orderId(order.getId())
-                .shopName(order.getShop().getShopName())
+                .shopName(order.getSellerName())
                 .status(order.getStatus())
                 .orderDate(order.getOrderDate())
                 .orderItems(order.getOrderItems().stream()

@@ -5,7 +5,8 @@ public record MenuDetailResponseDto(
         String menuName,
         int price,
         Long menuGroupId,
-        String menuGroupName
+        String menuGroupName,
+        boolean soldOut
 //        String description, //메뉴 설명
 //        String imageUrl //메뉴 이미지
 ) {}

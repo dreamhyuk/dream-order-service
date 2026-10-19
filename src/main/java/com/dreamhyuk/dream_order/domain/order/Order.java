@@ -1,8 +1,6 @@
 package com.dreamhyuk.dream_order.domain.order;
 
 import com.dreamhyuk.dream_order.domain.delivery.Delivery;
-import com.dreamhyuk.dream_order.domain.member.customer.Customer;
-import com.dreamhyuk.dream_order.domain.shop.Shop;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +21,21 @@ public class Order {
     @Column(name = "order_id")
     private Long id;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "shop_id")
-    private Shop shop;
+    //주문은 음식/마트 공통 도메인이라 가게, 회원을 객체로 참조하지 않고 ID만 가진다
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_type", nullable = false)
+    private OrderType orderType;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
+    //판매처 ID (음식 주문이면 가게 ID, 마트 주문이면 센터 ID)
+    @Column(name = "seller_id")
+    private Long sellerId;
+
+    //주문 시점의 판매처 이름 (나중에 가게 이름이 바뀌어도 주문 내역은 그대로)
+    @Column(name = "seller_name")
+    private String sellerName;
+
+    @Column(name = "customer_id")
+    private Long customerId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
@@ -52,16 +58,6 @@ public class Order {
     }
 
     //== 연관관계 메서드 ==//
-    public void setShop(Shop shop) {
-        this.shop = shop;
-        shop.getOrders().add(this);
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-        customer.getOrders().add(this);
-    }
-
     public void setDelivery(Delivery delivery) {
         this.delivery = delivery;
         delivery.connectOrder(this);
@@ -73,10 +69,13 @@ public class Order {
     }
 
     //== 생성 메서드 ==//
-    public static Order createOrder(Shop shop, Customer customer, Delivery delivery, DeliveryType deliveryType, List<OrderItem> orderItems) {
+    public static Order createOrder(OrderType orderType, Long sellerId, String sellerName, Long customerId,
+                                    Delivery delivery, DeliveryType deliveryType, List<OrderItem> orderItems) {
         Order order = new Order();
-        order.setShop(shop);
-        order.setCustomer(customer);
+        order.orderType = orderType;
+        order.sellerId = sellerId;
+        order.sellerName = sellerName;
+        order.customerId = customerId;
         order.setDelivery(delivery);
 
         for (OrderItem orderItem: orderItems) {

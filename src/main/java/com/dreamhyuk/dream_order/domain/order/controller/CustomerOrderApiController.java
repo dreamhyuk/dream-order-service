@@ -59,6 +59,32 @@ public class CustomerOrderApiController {
     }*/
 
     /**
+     * 결제 (가짜 결제: 요청하면 항상 성공)
+     */
+    @PostMapping("/{orderId}/payment")
+    public ResponseEntity<Void> payOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        orderService.payOrder(orderId, userDetails.getMemberId());
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 주문 취소
+     */
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        orderService.cancelOrder(orderId, userDetails.getMemberId());
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * 주문 조회
      */
     //전체 주문 조회

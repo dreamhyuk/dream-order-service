@@ -70,6 +70,11 @@ public class CartService {
         Menu menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new EntityNotFoundException("Menu Not Found"));
 
+        // 품절된 메뉴는 담을 수 없다
+        if (menu.isSoldOut()) {
+            throw new BusinessException(ErrorCode.MENU_SOLD_OUT);
+        }
+
         RedisCartItem cartItem = new RedisCartItem(menu.getId(), menu.getMenuName(), menu.getPrice(), count);
 
         // 장바구니에 아이템 추가 및 가게 ID 연동

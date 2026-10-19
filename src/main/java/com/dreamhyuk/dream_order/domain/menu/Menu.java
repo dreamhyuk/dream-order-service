@@ -1,14 +1,11 @@
 package com.dreamhyuk.dream_order.domain.menu;
 
-import com.dreamhyuk.dream_order.domain.order.OrderItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import static jakarta.persistence.FetchType.*;
 
@@ -22,9 +19,6 @@ public class Menu {
     @Column(name = "menu_id")
     private Long id;
 
-    @OneToMany(mappedBy = "menu")
-    private List<OrderItem> orderItems = new ArrayList<>();
-
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "menu_group_id")
     private MenuGroup menuGroup;
@@ -35,6 +29,10 @@ public class Menu {
 
     private String menuName;
     private int price;
+
+    //품절 여부 (음식 메뉴는 수량 재고 없이 사장님이 직접 켜고 끈다)
+    @Column(name = "sold_out", nullable = false)
+    private boolean soldOut;
 
     @Builder
     private Menu(String menuName, int price, Long shopId, MenuGroup menuGroup) {
@@ -64,5 +62,9 @@ public class Menu {
     public void update(String menuName, Integer price) {
         this.menuName = menuName;
         this.price = price;
+    }
+
+    public void changeSoldOut(boolean soldOut) {
+        this.soldOut = soldOut;
     }
 }

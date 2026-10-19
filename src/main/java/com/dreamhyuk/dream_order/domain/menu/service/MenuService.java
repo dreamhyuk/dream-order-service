@@ -8,6 +8,8 @@ import com.dreamhyuk.dream_order.domain.menu.repository.MenuGroupRepositoryCusto
 import com.dreamhyuk.dream_order.domain.menu.repository.MenuRepository;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
+import com.dreamhyuk.dream_order.global.exception.BusinessException;
+import com.dreamhyuk.dream_order.global.exception.ErrorCode;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -90,6 +92,22 @@ public class MenuService {
         menu.update(request.getMenuName(), request.getPrice());
     }
 
+    //품절 처리 / 해제
+    @Transactional
+    public void changeSoldOut(Long ownerId, Long shopId, Long menuId, boolean soldOut) throws AccessDeniedException {
+        validateShopOwner(shopId, ownerId);
+
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST));
+
+        //다른 가게의 메뉴는 바꿀 수 없다
+        if (!menu.getShopId().equals(shopId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+
+        menu.changeSoldOut(soldOut);
+    }
+
     @Transactional
     public void deleteMenu(Long ownerId, Long shopId, Long menuId) throws AccessDeniedException{
         validateShopOwner(shopId, ownerId);
@@ -150,7 +168,8 @@ public class MenuService {
                 menu.getMenuName(),
                 menu.getPrice(),
                 menu.getMenuGroup().getId(),
-                menu.getMenuGroup().getName()
+                menu.getMenuGroup().getName(),
+                menu.isSoldOut()
         );
     }
 }

@@ -30,7 +30,7 @@ public class OrderResponseDto {
 
         return OrderResponseDto.builder()
                 .orderId(order.getId())
-                .shopName(order.getShop().getShopName())
+                .shopName(order.getSellerName())
                 .orderTitle(title)
                 .totalPrice(order.getTotalOrderPrice())
                 .orderAt(order.getOrderDate())
@@ -44,7 +44,7 @@ public class OrderResponseDto {
             return "주문 내역 없음";
         }
 
-        String firstMenuName = orderItems.get(0).getMenu().getMenuName();
+        String firstMenuName = orderItems.get(0).getItemName();
         int otherCount = orderItems.size() - 1;
 
         return (otherCount > 0)

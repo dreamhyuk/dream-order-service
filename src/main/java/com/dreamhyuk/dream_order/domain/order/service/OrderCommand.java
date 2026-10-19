@@ -54,4 +54,12 @@ public class OrderCommand {
         private final Address directAddress;
     }
 
+    @Getter
+    @Builder
+    public static class CreateMartFromCart {
+        // 마트 주문은 항상 배달이므로 배송지 정보만 받는다
+        private final Long myAddressId;
+        private final Address directAddress;
+    }
+
 }

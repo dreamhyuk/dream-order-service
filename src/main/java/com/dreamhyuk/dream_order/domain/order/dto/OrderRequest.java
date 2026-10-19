@@ -28,4 +28,20 @@ public class OrderRequest {
                     .build();
         }
     }
+
+    @Getter
+    @NoArgsConstructor
+    public static class CreateMart {
+
+        //마트 주문은 항상 배달이므로 배송지 정보만 수신
+        private Long myAddressId;
+        private Address directAddress;
+
+        public OrderCommand.CreateMartFromCart toCommand() {
+            return OrderCommand.CreateMartFromCart.builder()
+                    .myAddressId(this.myAddressId)
+                    .directAddress(this.directAddress)
+                    .build();
+        }
+    }
 }

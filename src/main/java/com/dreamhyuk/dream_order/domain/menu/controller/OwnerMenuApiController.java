@@ -3,6 +3,7 @@ package com.dreamhyuk.dream_order.domain.menu.controller;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuCreateRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuGroupRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuGroupUpdateRequestDto;
+import com.dreamhyuk.dream_order.domain.menu.dto.MenuSoldOutRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.dto.MenuUpdateRequestDto;
 import com.dreamhyuk.dream_order.domain.menu.service.MenuService;
 import com.dreamhyuk.dream_order.global.userdetails.CustomUserDetails;
@@ -82,6 +83,19 @@ public class OwnerMenuApiController {
             @RequestBody MenuUpdateRequestDto request) throws AccessDeniedException {
 
         menuService.updateMenu(userDetails.getMemberId(), shopId, menuId, request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    //품절 처리 / 해제
+    @PatchMapping("/menus/{menuId}/sold-out")
+    public ResponseEntity<Void> changeSoldOut(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long shopId,
+            @PathVariable Long menuId,
+            @RequestBody @Valid MenuSoldOutRequestDto request) throws AccessDeniedException {
+
+        menuService.changeSoldOut(userDetails.getMemberId(), shopId, menuId, request.getSoldOut());
 
         return ResponseEntity.ok().build();
     }

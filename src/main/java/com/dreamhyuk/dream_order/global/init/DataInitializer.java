@@ -3,6 +3,7 @@ package com.dreamhyuk.dream_order.global.init;
 import com.dreamhyuk.dream_order.domain.category.Category;
 import com.dreamhyuk.dream_order.domain.category.CategoryRepository;
 import com.dreamhyuk.dream_order.domain.common.Address;
+import com.dreamhyuk.dream_order.domain.inventory.service.InventoryService;
 import com.dreamhyuk.dream_order.domain.member.MemberRole;
 import com.dreamhyuk.dream_order.domain.member.customer.Customer;
 import com.dreamhyuk.dream_order.domain.member.customer.CustomerRepository;
@@ -13,6 +14,10 @@ import com.dreamhyuk.dream_order.domain.menu.MenuGroup;
 import com.dreamhyuk.dream_order.domain.menu.repository.MenuGroupRepository;
 import com.dreamhyuk.dream_order.domain.menu.repository.MenuRepository;
 import com.dreamhyuk.dream_order.domain.order.DeliveryType;
+import com.dreamhyuk.dream_order.domain.product.Product;
+import com.dreamhyuk.dream_order.domain.product.ProductCategory;
+import com.dreamhyuk.dream_order.domain.product.repository.ProductCategoryRepository;
+import com.dreamhyuk.dream_order.domain.product.repository.ProductRepository;
 import com.dreamhyuk.dream_order.domain.review.ReviewDocument;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
@@ -38,6 +43,9 @@ public class DataInitializer implements CommandLineRunner {
     private final ShopRepository shopRepository;
     private final MenuGroupRepository menuGroupRepository;
     private final MenuRepository menuRepository;
+    private final InventoryService inventoryService;
+    private final ProductRepository productRepository;
+    private final ProductCategoryRepository productCategoryRepository;
     private final PasswordEncoder passwordEncoder;
     private final CategoryRepository categoryRepository;
     private final ElasticsearchOperations elasticsearchOperations;
@@ -233,6 +241,25 @@ public class DataInitializer implements CommandLineRunner {
             elasticsearchOperations.save(ShopDocument.from(shop3, List.of(group7, group8, group9)));
 
             System.out.println("ES에 상점 데이터 동기화 완료!");
+        }
+
+        // 마트 상품 데이터 (상품별 재고 포함)
+        if (productRepository.count() == 0) {
+            ProductCategory snack = productCategoryRepository.save(ProductCategory.createProductCategory("과자·간식", 1));
+            ProductCategory drink = productCategoryRepository.save(ProductCategory.createProductCategory("음료", 2));
+            ProductCategory living = productCategoryRepository.save(ProductCategory.createProductCategory("생활용품", 3));
+
+            List<Product> products = productRepository.saveAll(List.of(
+                    Product.createProduct(snack, "새우깡", 1500),
+                    Product.createProduct(snack, "초코파이 12개입", 4800),
+                    Product.createProduct(drink, "생수 2L", 1200),
+                    Product.createProduct(drink, "콜라 1.5L", 3200),
+                    Product.createProduct(living, "물티슈 100매", 2000),
+                    Product.createProduct(living, "두루마리 휴지 30롤", 15900)));
+
+            for (Product product : products) {
+                inventoryService.create(product.getId(), 100);
+            }
         }
     }
 }

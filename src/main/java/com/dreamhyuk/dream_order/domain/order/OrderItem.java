@@ -1,6 +1,5 @@
 package com.dreamhyuk.dream_order.domain.order;
 
-import com.dreamhyuk.dream_order.domain.menu.Menu;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -16,9 +15,13 @@ public class OrderItem {
     @Column(name = "order_item_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "menu_id")
-    private Menu menu;
+    //주문 대상 ID (음식 주문이면 메뉴 ID, 마트 주문이면 상품 ID). 어느 쪽인지는 Order.orderType 으로 구분한다
+    @Column(name = "item_id")
+    private Long itemId;
+
+    //주문 시점의 이름 (나중에 메뉴/상품 이름이 바뀌어도 주문 내역은 그대로)
+    @Column(name = "item_name")
+    private String itemName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
@@ -33,9 +36,10 @@ public class OrderItem {
     }
 
     //== 생성 메서드 ==//
-    public static OrderItem createOrderItem(Menu menu, int orderPrice, int count) {
+    public static OrderItem createOrderItem(Long itemId, String itemName, int orderPrice, int count) {
         OrderItem orderItem = new OrderItem();
-        orderItem.menu = menu;
+        orderItem.itemId = itemId;
+        orderItem.itemName = itemName;
         orderItem.orderPrice = orderPrice;
         orderItem.count = count;
 

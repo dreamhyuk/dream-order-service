@@ -12,12 +12,14 @@ public class MenuSummaryResponseDto {
     private Long id;
     private String menuName;
     private int price;
+    private boolean soldOut;
 
     public static MenuSummaryResponseDto from(Menu menu) {
         return MenuSummaryResponseDto.builder()
                 .id(menu.getId())
                 .menuName(menu.getMenuName())
                 .price(menu.getPrice())
+                .soldOut(menu.isSoldOut())
                 .build();
     }
 }

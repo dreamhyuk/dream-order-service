@@ -37,7 +37,7 @@ public class OrderSummaryResponse {
         String formattedTime = order.getOrderDate().format(DateTimeFormatter.ofPattern("HH:mm"));
 
         String displayMenuName = order.getOrderItems().isEmpty() ? "메뉴 없음" :
-                order.getOrderItems().get(0).getMenu().getMenuName();
+                order.getOrderItems().get(0).getItemName();
 
         if (order.getOrderItems().size() > 1) {
             displayMenuName += " 외 " + (order.getOrderItems().size() - 1) + "건";

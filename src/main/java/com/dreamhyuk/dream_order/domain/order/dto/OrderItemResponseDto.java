@@ -17,7 +17,7 @@ public class OrderItemResponseDto {
 
     public static OrderItemResponseDto of(OrderItem orderItem) {
         return OrderItemResponseDto.builder()
-                .menuName(orderItem.getMenu().getMenuName())
+                .menuName(orderItem.getItemName())
                 .orderPrice(orderItem.getOrderPrice())
                 .count(orderItem.getCount())
                 .totalPrice(orderItem.getTotalPrice())

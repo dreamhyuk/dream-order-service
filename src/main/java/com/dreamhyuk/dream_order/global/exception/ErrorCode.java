@@ -32,7 +32,24 @@ public enum ErrorCode {
     CART_EMPTY(HttpStatus.BAD_REQUEST, "C002", "장바구니가 비어 있어 주문을 진행할 수 없습니다."),
     DIFFERENT_SHOP_ERROR(HttpStatus.BAD_REQUEST, "C001", "DIFFERENT_SHOP_ERROR"),
     CART_SHOP_MISMATCH(HttpStatus.BAD_REQUEST, "C002", "장바구니의 가게 정보와 일치하지 않는 메뉴가 포함되어 있습니다."),
-    MENU_PRICE_CHANGED(HttpStatus.BAD_REQUEST, "C003", "선택하신 메뉴의 가격이 변동되었습니다. 장바구니를 확인해 주세요.");
+    MENU_PRICE_CHANGED(HttpStatus.BAD_REQUEST, "C003", "선택하신 메뉴의 가격이 변동되었습니다. 장바구니를 확인해 주세요."),
+    MENU_SOLD_OUT(HttpStatus.BAD_REQUEST, "C004", "품절된 메뉴가 포함되어 있습니다."),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "주문 정보를 찾을 수 없습니다."),
+
+    // Inventory
+    OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "I001", "재고가 부족한 상품이 포함되어 있습니다."),
+    INVENTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "I002", "재고 정보를 찾을 수 없습니다."),
+
+    // Mart Product
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "상품 정보를 찾을 수 없습니다."),
+    PRODUCT_NOT_ON_SALE(HttpStatus.BAD_REQUEST, "T002", "판매 중지된 상품이 포함되어 있습니다."),
+    PRODUCT_PRICE_CHANGED(HttpStatus.BAD_REQUEST, "T003", "상품의 가격이 변동되었습니다. 장바구니를 확인해 주세요."),
+
+    // Payment
+    PAYMENT_REQUIRED(HttpStatus.BAD_REQUEST, "P001", "결제가 완료되지 않은 주문입니다."),
+    ORDER_NOT_PAYABLE(HttpStatus.BAD_REQUEST, "P002", "결제할 수 없는 주문 상태입니다.");
 
     private final HttpStatus status;
     private final String code;
