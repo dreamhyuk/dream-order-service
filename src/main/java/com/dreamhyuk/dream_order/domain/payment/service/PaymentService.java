@@ -9,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 가짜 결제. 외부 PG 를 호출하지 않고 항상 성공한다.
@@ -52,5 +55,15 @@ public class PaymentService {
 
     public boolean isPaid(Long orderId) {
         return paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PAID);
+    }
+
+    /**
+     * 주어진 주문들 중 결제 완료된 주문 ID만 반환한다. (목록 조회 시 주문마다 쿼리하지 않도록)
+     */
+    public Set<Long> findPaidOrderIds(Collection<Long> orderIds) {
+        if (orderIds.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(paymentRepository.findOrderIdsByOrderIdInAndStatus(orderIds, PaymentStatus.PAID));
     }
 }

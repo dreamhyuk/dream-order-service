@@ -6,6 +6,7 @@ import com.dreamhyuk.dream_order.domain.cart.service.CartService;
 import com.dreamhyuk.dream_order.domain.category.Category;
 import com.dreamhyuk.dream_order.domain.category.CategoryRepository;
 import com.dreamhyuk.dream_order.domain.common.Address;
+import com.dreamhyuk.dream_order.domain.delivery.DeliveryStatus;
 import com.dreamhyuk.dream_order.domain.inventory.repository.InventoryReservationRepository;
 import com.dreamhyuk.dream_order.domain.member.MemberRole;
 import com.dreamhyuk.dream_order.domain.member.customer.Customer;
@@ -185,6 +186,30 @@ class OrderServiceTest {
         assertThat(orders.get(0).getOrderId()).isEqualTo(orderId);
         assertThat(orders.get(0).getMenuName()).isEqualTo("후라이드치킨");
         assertThat(otherShopOrders).isEmpty();
+    }
+
+    @Test
+    @DisplayName("사장님 주문 목록에 결제 여부와 배달 상태가 담긴다")
+    void findOrdersByShopId_paidAndDeliveryStatus() {
+        Long unpaidOrderId = placeOrder(customer, 1, 0);
+        Long paidOrderId = placeOrder(customer, 1, 0);
+        orderService.payOrder(paidOrderId, customer.getId());
+        orderService.acceptOrder(paidOrderId, 30);
+        orderService.startCooking(paidOrderId);
+        orderService.completeCooking(paidOrderId);
+
+        List<OrderSummaryResponse> orders = orderService.findOrdersByShopId(shop.getId());
+
+        OrderSummaryResponse unpaid = orders.stream()
+                .filter(o -> o.getOrderId().equals(unpaidOrderId)).findFirst().orElseThrow();
+        OrderSummaryResponse paid = orders.stream()
+                .filter(o -> o.getOrderId().equals(paidOrderId)).findFirst().orElseThrow();
+
+        assertThat(unpaid.isPaid()).isFalse();
+        assertThat(unpaid.getDeliveryStatus()).isEqualTo(DeliveryStatus.NONE);
+        assertThat(paid.isPaid()).isTrue();
+        assertThat(paid.getStatus()).isEqualTo(OrderStatus.PREPARING.name());
+        assertThat(paid.getDeliveryStatus()).isEqualTo(DeliveryStatus.READY_FOR_PICKUP);
     }
 
     @Test

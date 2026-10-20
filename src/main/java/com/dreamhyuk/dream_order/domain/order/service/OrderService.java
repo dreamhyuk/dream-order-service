@@ -36,6 +36,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,8 +57,11 @@ public class OrderService {
     public List<OrderSummaryResponse> findOrdersByShopId(Long shopId) {
         List<Order> orders = orderRepository.findByOrderTypeAndSellerId(OrderType.FOOD, shopId);
 
+        Set<Long> paidOrderIds = paymentService.findPaidOrderIds(
+                orders.stream().map(Order::getId).toList());
+
         return orders.stream()
-                .map(OrderSummaryResponse::from)
+                .map(order -> OrderSummaryResponse.from(order, paidOrderIds.contains(order.getId())))
                 .collect(Collectors.toList());
     }
 

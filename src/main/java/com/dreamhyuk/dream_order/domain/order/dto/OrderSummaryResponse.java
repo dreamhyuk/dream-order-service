@@ -1,5 +1,6 @@
 package com.dreamhyuk.dream_order.domain.order.dto;
 
+import com.dreamhyuk.dream_order.domain.delivery.DeliveryStatus;
 import com.dreamhyuk.dream_order.domain.order.Order;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,19 +18,24 @@ public class OrderSummaryResponse {
     private int totalPrice;
     private String status;
     private String  createdAt;
+    private boolean paid; //결제 완료 여부 (결제된 주문만 접수할 수 있다)
+    private DeliveryStatus deliveryStatus; //조리 완료 여부를 구분하기 위한 배달 상태
 
     @Builder // 🌟 생성자 레벨 빌더 유지
     private OrderSummaryResponse(Long orderId, String orderNumber, String menuName,
-                                int totalPrice, String status, String createdAt) { // 🌟 private을 지워서 패키지 내 접근 허용!
+                                int totalPrice, String status, String createdAt,
+                                boolean paid, DeliveryStatus deliveryStatus) { // 🌟 private을 지워서 패키지 내 접근 허용!
         this.orderId = orderId;
         this.orderNumber = orderNumber;
         this.menuName = menuName;
         this.totalPrice = totalPrice;
         this.status = status;
         this.createdAt = createdAt;
+        this.paid = paid;
+        this.deliveryStatus = deliveryStatus;
     }
 
-    public static OrderSummaryResponse from(Order order) {
+    public static OrderSummaryResponse from(Order order, boolean paid) {
 
         String generatedOrderNumber = "A-" + order.getId();
 
@@ -50,6 +56,8 @@ public class OrderSummaryResponse {
                 .totalPrice(order.getTotalOrderPrice())
                 .status(order.getStatus().name()) // 🌟 status도 항상 존재하므로 한 줄로 깔끔하게 매핑!
                 .createdAt(formattedTime)
+                .paid(paid)
+                .deliveryStatus(order.getDelivery().getStatus())
                 .build();
     }
 }

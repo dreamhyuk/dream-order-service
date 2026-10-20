@@ -17,6 +17,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("select o from Order o where o.customerId = :customerId and o.status not in (OrderStatus.COMP, OrderStatus.CANCEL)")
     List<Order> findActiveOrders(Long customerId);
 
-    @EntityGraph(attributePaths = {"orderItems"})
+    @EntityGraph(attributePaths = {"orderItems", "delivery"})
     List<Order> findByOrderTypeAndSellerId(OrderType orderType, Long sellerId);
 }
