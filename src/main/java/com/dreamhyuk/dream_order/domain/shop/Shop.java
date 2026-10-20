@@ -10,6 +10,8 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "shops")
@@ -87,9 +89,21 @@ public class Shop {
             throw new IllegalArgumentException("카테고리는 최대 2개만 선택할 수 있습니다.");
         }
 
-        this.shopCategories.clear();
+        //전부 지우고 다시 넣으면 Hibernate가 INSERT를 DELETE보다 먼저 실행해서
+        //유지되는 카테고리가 (shop_id, category_id) 유니크 제약에 걸린다. 바뀐 것만 빼고 더한다.
+        Set<Long> newCategoryIds = categories.stream()
+                .map(Category::getId)
+                .collect(Collectors.toSet());
+        this.shopCategories.removeIf(sc -> !newCategoryIds.contains(sc.getCategory().getId()));
+
+        Set<Long> existingCategoryIds = this.shopCategories.stream()
+                .map(sc -> sc.getCategory().getId())
+                .collect(Collectors.toSet());
 
         for (Category category: categories) {
+            if (existingCategoryIds.contains(category.getId())) {
+                continue;
+            }
             ShopCategory shopCategory = ShopCategory.createShopCategory(category);
             this.shopCategories.add(shopCategory);
             shopCategory.setShop(this);
@@ -113,7 +127,6 @@ public class Shop {
         this.shopName = shopName;
         this.address = address;
 
-        this.shopCategories.clear();
         this.addCategory(categories);
 
         this.supportedTypes.clear();

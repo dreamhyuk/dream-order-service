@@ -1,5 +1,6 @@
 package com.dreamhyuk.dream_order.domain.shop.controller;
 
+import com.dreamhyuk.dream_order.domain.shop.dto.OwnerShopDetailResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopCreateRequestDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopSummaryResponse;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopUpdateRequestDto;
@@ -41,6 +42,15 @@ public class OwnerShopApiController {
         List<ShopSummaryResponse> results = shopService.getShopsByOwner(userDetails.getMemberId());
 
         return ResponseEntity.ok(results);
+    }
+
+    //가게 상세 (수정 화면에서 현재 값을 채우는 용도)
+    @GetMapping("/{shopId}")
+    public ResponseEntity<OwnerShopDetailResponseDto> getMyShopDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long shopId) throws AccessDeniedException {
+
+        return ResponseEntity.ok(shopService.getOwnerShopDetail(shopId, userDetails.getMemberId()));
     }
 
     @PatchMapping("/{shopId}")

@@ -12,6 +12,7 @@ import com.dreamhyuk.dream_order.domain.review.repository.ReviewRepository;
 import com.dreamhyuk.dream_order.domain.shop.Shop;
 import com.dreamhyuk.dream_order.domain.shop.ShopDocument;
 import com.dreamhyuk.dream_order.domain.shop.ShopRepository;
+import com.dreamhyuk.dream_order.domain.shop.dto.OwnerShopDetailResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopSearchResponseDto;
 import com.dreamhyuk.dream_order.domain.shop.dto.ShopSummaryResponse;
@@ -174,6 +175,13 @@ public class ShopService {
 
 
     /** Owner */
+    //가게 상세 (수정 화면용, 본인 가게만)
+    public OwnerShopDetailResponseDto getOwnerShopDetail(Long shopId, Long ownerId) throws AccessDeniedException {
+        Shop shop = validateShopOwner(shopId, ownerId);
+
+        return OwnerShopDetailResponseDto.from(shop);
+    }
+
     public List<ShopSummaryResponse> getShopsByOwner(Long ownerId) {
         return shopRepository.findByOwnerId(ownerId).stream()
                 .map(ShopSummaryResponse::from)
